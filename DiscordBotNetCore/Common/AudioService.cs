@@ -57,7 +57,7 @@ public class AudioService
 
 		if (!File.Exists(path))
 		{
-			await channel.SendMessageAsync("`File does not exist.`");
+			await channel.SendMessageAsync("`The file does not exist.`");
 			return;
 		}
 		IAudioClient client;
