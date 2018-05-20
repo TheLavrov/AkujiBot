@@ -1,0 +1,10 @@
+{
+  "Owners": [ 111DISCORDIDHERE, 222DISCORDIDHERE, 333ETCIDSHERE],
+  "Prefix": "~",
+  "Token": "Bot_token_goes_here",
+  "Volume": 50.0,
+  "consumerKey": "",
+  "consumerSecret": "",
+  "userAccessToken": "",
+  "userAccessSecret": ""
+}
