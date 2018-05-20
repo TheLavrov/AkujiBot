@@ -66,6 +66,7 @@ namespace DiscordBot.Modules
 		string mariomakeruri = "https://supermariomakerbookmark.nintendo.net/courses/";
 
 		[Command("bookmark")]
+		[Remarks("bookmark [Mario Maker Level ID]")]
 		[Summary("Gives more details on a Mario Maker Bookmark page.")]
 		public async Task Bookmark(string bookmark)
 		{
