@@ -91,8 +91,15 @@ namespace DiscordBot.Modules
 
 			if (String.IsNullOrWhiteSpace(name))
 			{
+				foreach (var cd in countdownlist)
+				{
+					if (cd.channel == Context.Channel)
+					{
+						cd.running = false;
+					}
+				}
 				removalID = Context.Channel.Id;
-				var message = await ReplyAsync($"`Removed all countdowns in this channel.`");
+				var message = await ReplyAsync($"`Removing all countdowns in this channel. May take a bit if a live countdown is being removed.`");
 				await Task.Delay(2000);
 				await message.DeleteAsync();
 				return;
