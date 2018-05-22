@@ -202,7 +202,7 @@ namespace DiscordBot.Modules
 							await cdg.channel.SendMessageAsync("", false, embed.Build());
 							majora++;
 						}
-						else if (cdg.countdown <= DateTime.Now && majora == 3)
+						else if (cdg.countdown <= DateTime.Now)
 						{
 							embed.WithImageUrl("https://i.imgur.com/Nu3dray.png");
 							embed.WithDescription($"The countdown has finished.");
