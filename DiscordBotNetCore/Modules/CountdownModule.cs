@@ -178,7 +178,7 @@ namespace DiscordBot.Modules
 							}
 							else
 							{
-								sleeping = TimeSpan.FromSeconds(0.5);
+								sleeping = TimeSpan.FromSeconds(1);
 								display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
 								await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 							}
@@ -211,14 +211,10 @@ namespace DiscordBot.Modules
 							break;
 						}
 
-						if (cdg.live)
-						{
+						if (cdg.live)									//make sure sleep checks out if live is in use
 							Thread.Sleep(sleeping);
-						}
 						else
-						{
 							Thread.Sleep(5000);
-						}
 					}
 					live = false;
 					await Context.Client.SetGameAsync(null);
@@ -252,7 +248,6 @@ namespace DiscordBot.Modules
 
 						if (cdg.countdown <= DateTime.Now)
 						{
-							embed.WithImageUrl("");
 							embed.WithDescription($"Ring Ring! The countdown has finished!");
 							embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
 							embed.WithColor(Color.Green);
@@ -272,7 +267,6 @@ namespace DiscordBot.Modules
 						Thread.Sleep(5000);
 						if (cdg.countdown <= DateTime.Now)
 						{
-							embed.WithImageUrl("");
 							embed.WithDescription($"Ring Ring! The countdown has finished!");
 							embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
 							embed.WithColor(Color.Green);
