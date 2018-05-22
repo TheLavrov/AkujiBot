@@ -167,7 +167,7 @@ namespace DiscordBot.Modules
 					embed.AddField("Next Stages", stageListNext);
 					embed.AddField("Next Gamemode", splatoon.gachi[1].rule.name);
 
-					embed.WithFooter($"Next rotation is in {TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
+					embed.WithFooter($"Next rotation is in {(TimeLeft.Days * 24) + TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(255, 128, 0);
 				}
 				else if (choice == "league")
@@ -183,7 +183,7 @@ namespace DiscordBot.Modules
 					embed.AddField("Next Stages", stageListNext);
 					embed.AddField("Next Gamemode", splatoon.league[1].rule.name);
 
-					embed.WithFooter($"Next rotation is in {TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
+					embed.WithFooter($"Next rotation is in {(TimeLeft.Days * 24) + TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(255, 128, 255);
 				}
 				else if (String.IsNullOrWhiteSpace(choice))
@@ -199,7 +199,7 @@ namespace DiscordBot.Modules
 					embed.AddField("Next Stages", stageListNext);
 					embed.AddField("Next Gamemode", splatoon.regular[1].rule.name);
 
-					embed.WithFooter($"Next rotation is in {TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
+					embed.WithFooter($"Next rotation is in {(TimeLeft.Days * 24) + TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(33, 233, 22);
 				}
 				else
@@ -216,7 +216,7 @@ namespace DiscordBot.Modules
 					embed.AddField("Next Stages", stageListNext);
 					embed.AddField("Next Gamemode", splatoon.regular[1].rule.name);
 
-					embed.WithFooter($"Next rotation is in {TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
+					embed.WithFooter($"Next rotation is in {(TimeLeft.Days * 24) + TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(33, 233, 22);
 				}
 
@@ -272,7 +272,7 @@ namespace DiscordBot.Modules
 					embed.AddField("Main Skill", splatnet.merchandises[MoreInfo].skill.name, true);
 					embed.AddField("Common Skill", splatnet.merchandises[MoreInfo].gear.brand.frequent_skill.name, true);
 
-					var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(splatnet.merchandises[MoreInfo].end_time).UtcDateTime - DateTimeOffset.UtcNow;
+					var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(splatnet.merchandises[MoreInfo].end_time).LocalDateTime - DateTimeOffset.UtcNow;
 					embed.WithFooter($"This item will leave the store in {TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(33, 233, 22);
 				}
@@ -287,27 +287,24 @@ namespace DiscordBot.Modules
 		public async Task SalmonRun()
 		{ 
 			string salmonrunurl = uri + "/data/coop-schedules.json";
-
 			var embed = new EmbedBuilder();
 
 			using (IRestClient client = new RestClient())
 			{
 				salmonrunurl = await client.GetStringAsync(salmonrunurl);
 				var salmonrun = JsonConvert.DeserializeObject<SalmonRun>(salmonrunurl);
-
 				
-
 				bool IsLive = false;
 				int latest = 0;
 				for (int i = 0; i < salmonrun.details.Count; i++)
 				{
-					if (Context.Message.Timestamp.ToUnixTimeSeconds() >= DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[i].start_time).ToUnixTimeSeconds() && Context.Message.Timestamp.ToUnixTimeSeconds() < DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[i].end_time).ToUnixTimeSeconds())
+					if (Context.Message.Timestamp.ToUnixTimeSeconds() >= salmonrun.details[i].start_time && Context.Message.Timestamp.ToUnixTimeSeconds() < salmonrun.details[i].end_time)
 					{
 						IsLive = true;
 						latest = i;
 						break;
 					}
-					if (Context.Message.Timestamp.ToUnixTimeSeconds() < DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[i].start_time).ToUnixTimeSeconds())
+					if (Context.Message.Timestamp.ToUnixTimeSeconds() < salmonrun.details[i].start_time)
 					{
 						IsLive = false;
 						latest = i;
