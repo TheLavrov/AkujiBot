@@ -316,26 +316,22 @@ namespace DiscordBot.Modules
 				}
 
 				var ScheduleTimePST = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time);
-				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].end_time - DateTimeOffset.Now.ToUnixTimeSeconds());
-				var TimeUntil = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time - DateTimeOffset.Now.ToUnixTimeSeconds());
+				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].end_time).LocalDateTime - DateTimeOffset.Now;
+				var TimeUntil = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time).LocalDateTime - DateTimeOffset.Now;
 
 				if (IsLive)
 				{
 					embed.WithAuthor("Salmon Run is live!", null);
 					embed.WithThumbnailUrl(nintendouri + salmonrun.details[latest].stage.image);
-					embed.WithDescription($"Time Started: {ScheduleTimePST.LocalDateTime} PST \nTime Left: {TimeLeft.Hour} Hours, {TimeLeft.Minute} Minutes, {TimeLeft.Second} Seconds");
+					embed.WithDescription($"Time Started: {ScheduleTimePST.LocalDateTime} PST \nTime Left: {(TimeLeft.Days * 24) + TimeLeft.Hours} Hours, {TimeLeft.Minutes} Minutes, {TimeLeft.Seconds} Seconds");
 					embed.AddField("Current Stage", salmonrun.details[latest].stage.name);
 					string weaponList = "";
 					foreach (var weapon in salmonrun.details[latest].weapons)
 					{
 						if (weapon != null)
-						{
 							weaponList += weapon.name + '\n';
-						}
 						else
-						{
 							weaponList += "A Random Item?" + '\n';
-						}
 					}
 					embed.AddField("Weapons Given", weaponList);
 					embed.WithFooter("Time is displayed in Pacific Standard Time (PST). Data is taken from the splatoon2.ink website.", null);
@@ -345,19 +341,15 @@ namespace DiscordBot.Modules
 				{
 					embed.WithAuthor("Salmon Run is down.", null);
 					embed.WithThumbnailUrl(nintendouri + salmonrun.details[latest].stage.image);
-					embed.WithDescription($"Next Run: {ScheduleTimePST.LocalDateTime} PST \nWill Start At: {TimeUntil.Hour} Hours, {TimeUntil.Minute} Minutes, {TimeUntil.Second} Seconds");
+					embed.WithDescription($"Next Run: {ScheduleTimePST.LocalDateTime} PST \nWill Start At: {(TimeLeft.Days * 24) + TimeUntil.Hours} Hours, {TimeUntil.Minutes} Minutes, {TimeUntil.Seconds} Seconds");
 					embed.AddField("Next Stage", salmonrun.details[latest].stage.name);
 					string weaponList = "";
 					foreach (var weapon in salmonrun.details[latest].weapons)
 					{
 						if (weapon != null)
-						{
 							weaponList += weapon.name + '\n';
-						}
 						else
-						{
 							weaponList += "A Random Item?" + '\n';
-						}
 					}
 					embed.AddField("Weapons Given", weaponList);
 					embed.WithFooter("Time is displayed in Pacific Standard Time (PST). Data is taken from the splatoon2.ink website.", null);
