@@ -313,8 +313,8 @@ namespace DiscordBot.Modules
 				}
 
 				var ScheduleTimePST = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time);
-				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].end_time).UtcDateTime - DateTimeOffset.UtcNow;
-				var TimeUntil = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time).UtcDateTime - DateTimeOffset.UtcNow;
+				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].end_time).LocalDateTime - DateTimeOffset.Now;
+				var TimeUntil = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time).LocalDateTime - DateTimeOffset.Now;
 
 				if (IsLive)
 				{
@@ -338,7 +338,7 @@ namespace DiscordBot.Modules
 				{
 					embed.WithAuthor("Salmon Run is down.", null);
 					embed.WithThumbnailUrl(nintendouri + salmonrun.details[latest].stage.image);
-					embed.WithDescription($"Next Run: {ScheduleTimePST.LocalDateTime} PST \nWill Start At: {(TimeLeft.Days * 24) + TimeUntil.Hours} Hours, {TimeUntil.Minutes} Minutes, {TimeUntil.Seconds} Seconds");
+					embed.WithDescription($"Next Run: {ScheduleTimePST.LocalDateTime} PST \nWill Start At: {(TimeUntil.Days * 24) + TimeUntil.Hours} Hours, {TimeUntil.Minutes} Minutes, {TimeUntil.Seconds} Seconds");
 					embed.AddField("Next Stage", salmonrun.details[latest].stage.name);
 					string weaponList = "";
 					foreach (var weapon in salmonrun.details[latest].weapons)
