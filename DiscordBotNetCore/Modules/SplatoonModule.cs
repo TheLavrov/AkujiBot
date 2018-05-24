@@ -313,8 +313,8 @@ namespace DiscordBot.Modules
 				}
 
 				var ScheduleTimePST = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time);
-				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].end_time).LocalDateTime - DateTimeOffset.Now;
-				var TimeUntil = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time).LocalDateTime - DateTimeOffset.Now;
+				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].end_time).UtcDateTime - DateTimeOffset.UtcNow;
+				var TimeUntil = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time).UtcDateTime - DateTimeOffset.UtcNow;
 
 				if (IsLive)
 				{
