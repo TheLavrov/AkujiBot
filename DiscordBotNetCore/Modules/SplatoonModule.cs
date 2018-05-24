@@ -152,7 +152,7 @@ namespace DiscordBot.Modules
 				var splatoon = JsonConvert.DeserializeObject<Splatoon>(splatoonurl);
 
 				var embed = new EmbedBuilder();
-				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(splatoon.regular[0].end_time).UtcDateTime - DateTimeOffset.UtcNow;
+				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(splatoon.regular[0].end_time).LocalDateTime - DateTimeOffset.Now;
 
 				if (choice == "ranked")
 				{
@@ -272,7 +272,7 @@ namespace DiscordBot.Modules
 					embed.AddField("Main Skill", splatnet.merchandises[MoreInfo].skill.name, true);
 					embed.AddField("Common Skill", splatnet.merchandises[MoreInfo].gear.brand.frequent_skill.name, true);
 
-					var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(splatnet.merchandises[MoreInfo].end_time).LocalDateTime - DateTimeOffset.UtcNow;
+					var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(splatnet.merchandises[MoreInfo].end_time).LocalDateTime - DateTimeOffset.Now;
 					embed.WithFooter($"This item will leave the store in {TimeLeft.Hours} hours, {TimeLeft.Minutes} minutes, and {TimeLeft.Seconds} seconds. Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(33, 233, 22);
 				}
