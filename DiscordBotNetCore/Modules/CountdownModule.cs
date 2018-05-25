@@ -141,6 +141,7 @@ namespace DiscordBot.Modules
 				int majora = 0;
 				var embed = new EmbedBuilder();
 				embed.WithAuthor(cdg.description);
+				bool sync = true;
 
 				if (cdg.extra)
 				{
@@ -181,6 +182,12 @@ namespace DiscordBot.Modules
 								sleeping = TimeSpan.FromSeconds(1);
 								display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
 								await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+							}
+
+							if (sync)
+							{
+								Thread.Sleep(TimeSpan.FromSeconds(60 - DateTime.Now.Second));               //try to sync updating with start of a new minute (will probably be slightly off)
+								sync = false;
 							}
 						}
 
@@ -244,6 +251,12 @@ namespace DiscordBot.Modules
 							sleeping = TimeSpan.FromSeconds(1);
 							display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
 							await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+						}
+
+						if (sync)
+						{
+							Thread.Sleep(TimeSpan.FromSeconds(60 - DateTime.Now.Second));               //try to sync updating with start of a new minute (will probably be slightly off)
+							sync = false;
 						}
 
 						if (cdg.countdown <= DateTime.Now)
