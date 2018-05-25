@@ -238,12 +238,12 @@ namespace DiscordBot.Modules
 						timeLeft = cdg.countdown - DateTime.Now;
 						if (timeLeft > TimeSpan.FromDays(1))
 						{
-							display = $"{timeLeft.Days} Days until {cdg.description}";
+							display = $"{timeLeft.Days + 1} Days until {cdg.description}";
 							await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 						}
 						else if (timeLeft > TimeSpan.FromHours(10))
 						{
-							display = $"{timeLeft.Hours} Hours until {cdg.description}";
+							display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
 							await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 						}
 						else
