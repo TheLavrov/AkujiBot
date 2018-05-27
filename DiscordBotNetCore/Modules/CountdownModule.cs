@@ -174,7 +174,7 @@ namespace DiscordBot.Modules
 							}
 							else if (timeLeft > TimeSpan.FromHours(10))
 							{
-								display = $"{timeLeft.Hours} Hours until {cdg.description}";
+								display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
 								await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 							}
 							else
@@ -243,7 +243,7 @@ namespace DiscordBot.Modules
 						}
 						else if (timeLeft > TimeSpan.FromHours(10))
 						{
-							display = $"{timeLeft.Hours} Hours until {cdg.description}";
+							display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
 							await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 						}
 						else
