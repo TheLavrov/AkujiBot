@@ -16,7 +16,7 @@ namespace DiscordBot.Modules
 			public Discord.WebSocket.ISocketMessageChannel channel;
 			public DateTime countdown;
 			public string description;
-			public bool extra = false;
+			public bool majora = false;
 			public bool live = false;
 			public bool running = false;
 			public CountdownGroup(Discord.WebSocket.ISocketMessageChannel chnl, DateTime cd, string d = " ", string ex = " ")
@@ -27,7 +27,7 @@ namespace DiscordBot.Modules
 				running = true;
 				if (ex.ToLower().Contains("majora"))
 				{
-					extra = true;
+					majora = true;
 				}
 				if (ex.ToLower().Contains("live"))
 				{
@@ -202,7 +202,7 @@ namespace DiscordBot.Modules
 							break;
 					}
 
-					if (cdg.extra)
+					if (cdg.majora)
 					{
 						if (cdg.countdown <= DateTime.Now.AddHours(72) && majora == 0)                  //post majora images before 3 days, 2 days, and 1 day
 						{
@@ -227,16 +227,13 @@ namespace DiscordBot.Modules
 					if (cdg.countdown <= DateTime.Now)
 					{
 						embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
-						if(cdg.extra)
+						if(cdg.majora)
 							embed.WithImageUrl("https://i.imgur.com/Nu3dray.png");
 						embed.WithDescription($"The countdown has finished!");
 						embed.WithColor(Color.Green);
 						await cdg.channel.SendMessageAsync("", false, embed.Build());
 						break;
 					}
-
-					if (!cdg.live)                                  //make sure sleep checks out if live is in use
-						Thread.Sleep(5000);
 				}
 				if (cdg.live)
 					live = false;
