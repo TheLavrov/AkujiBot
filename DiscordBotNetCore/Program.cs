@@ -71,10 +71,7 @@ namespace DiscordBot
 			await _client.LoginAsync(TokenType.Bot, Config.Load().Token);
 			await _client.StartAsync();
 
-			if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-				await _client.SetGameAsync("Debugging", null, ActivityType.Watching);
-			else
-				await _client.SetGameAsync(null);
+			await _client.SetGameAsync(null);
 
 			await Task.Delay(-1);
 		}
