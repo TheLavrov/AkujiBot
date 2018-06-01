@@ -40,6 +40,43 @@ namespace DiscordBot.Modules
 		public static bool live = false;
 		public static List<CountdownGroup> countdownlist = new List<CountdownGroup>();
 
+		public async Task<bool> LiveCountdown(TimeSpan timeLeft, CountdownGroup cdg)
+		{
+			TimeSpan sleeping = TimeSpan.FromMinutes(1);
+			var embed = new EmbedBuilder();
+			embed.WithAuthor(cdg.description);
+			string display = "";
+			timeLeft = cdg.countdown - DateTime.Now;
+
+			if (timeLeft > TimeSpan.FromDays(1))
+			{
+				display = $"{timeLeft.Days + 1} Days until {cdg.description}";
+				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+			}
+			else if (timeLeft > TimeSpan.FromHours(10))
+			{
+				display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
+				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+			}
+			else
+			{
+				sleeping = TimeSpan.FromSeconds(1);
+				display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
+				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+			}
+
+			if (cdg.countdown <= DateTime.Now)
+			{
+				embed.WithDescription($"The countdown has finished!");
+				embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
+				embed.WithColor(Color.Green);
+				await cdg.channel.SendMessageAsync("", false, embed.Build());
+				return true;
+			}
+			Thread.Sleep(sleeping);
+			return false;
+		}
+
 		[Command("countdown", RunMode = RunMode.Async)]
 		[Remarks("countdown \"[name of countdown]\" \"[MM/DD/YYYY]\"")]
 		[Summary("(ADMIN ONLY) Initializes a countdown. Leaving countdown blank will close any countdowns active. Writing \"countdown list\" will display all running countdowns for a channel. Make sure to put quotes around your date and name value.")]
@@ -143,55 +180,31 @@ namespace DiscordBot.Modules
 				embed.WithAuthor(cdg.description);
 				bool sync = true;
 
-				if (cdg.extra)
+				if (cdg.countdown <= DateTime.Now.AddHours(72))                                     //set majora int to avoid posting images pointlessly
+					majora++;
+				if (cdg.countdown <= DateTime.Now.AddHours(48))
+					majora++;
+				if (cdg.countdown <= DateTime.Now.AddHours(24))
+					majora++;
+
+				while (cdg.running && removalID != cdg.channel.Id)
 				{
-					TimeSpan timeLeft;
-					string display = "";
-					TimeSpan sleeping = TimeSpan.FromMinutes(1);
-					if (cdg.countdown <= DateTime.Now.AddHours(72))										//set majora int to avoid posting images pointlessly
+					if (cdg.live)                                                                   // if user puts both majora and live (majoralive)
 					{
-						majora++;
-					}
-					if (cdg.countdown <= DateTime.Now.AddHours(48))
-					{
-						majora++;
-					}
-					if (cdg.countdown <= DateTime.Now.AddHours(24))
-					{
-						majora++;
-					}
-
-					while (cdg.running && removalID != cdg.channel.Id)
-					{
-						if (cdg.live)                                                                   // if user puts both majora and live (majoralive)
+						live = true;
+						bool currentcountdown = await LiveCountdown(cdg.countdown - DateTime.Now, cdg);
+						if (sync && (cdg.countdown - DateTime.Now) > TimeSpan.FromHours(10))
 						{
-							live = true;
-							timeLeft = cdg.countdown - DateTime.Now;
-							if (timeLeft > TimeSpan.FromDays(1))
-							{
-								display = $"{timeLeft.Days + 1} Days until {cdg.description}";
-								await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
-							}
-							else if (timeLeft > TimeSpan.FromHours(10))
-							{
-								display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
-								await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
-							}
-							else
-							{
-								sleeping = TimeSpan.FromSeconds(1);
-								display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
-								await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
-							}
-
-							if (sync)
-							{
-								Thread.Sleep(TimeSpan.FromSeconds(60 - DateTime.Now.Second));               //try to sync updating with start of a new minute (will probably be slightly off)
-								sync = false;
-							}
+							Thread.Sleep(TimeSpan.FromSeconds(60 - DateTime.Now.Second));               //try to sync updating with start of a new minute (will probably be slightly off)
+							sync = false;
 						}
+						if (currentcountdown)
+							break;
+					}
 
-						if (cdg.countdown <= DateTime.Now.AddHours(72) && majora == 0)					//post majora images before 3 days, 2 days, and 1 day
+					if (cdg.extra)
+					{
+						if (cdg.countdown <= DateTime.Now.AddHours(72) && majora == 0)                  //post majora images before 3 days, 2 days, and 1 day
 						{
 							embed.WithImageUrl("https://i.imgur.com/8FHn7Dy.jpg");
 							await cdg.channel.SendMessageAsync("", false, embed.Build());
@@ -209,87 +222,27 @@ namespace DiscordBot.Modules
 							await cdg.channel.SendMessageAsync("", false, embed.Build());
 							majora++;
 						}
-						else if (cdg.countdown <= DateTime.Now)
-						{
+					}
+					
+					if (cdg.countdown <= DateTime.Now)
+					{
+						embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
+						if(cdg.extra)
 							embed.WithImageUrl("https://i.imgur.com/Nu3dray.png");
-							embed.WithDescription($"The countdown has finished.");
-							embed.WithColor(Color.Green);
-							await cdg.channel.SendMessageAsync("", false, embed.Build());
-							break;
-						}
-
-						if (cdg.live)									//make sure sleep checks out if live is in use
-							Thread.Sleep(sleeping);
-						else
-							Thread.Sleep(5000);
+						embed.WithDescription($"The countdown has finished!");
+						embed.WithColor(Color.Green);
+						await cdg.channel.SendMessageAsync("", false, embed.Build());
+						break;
 					}
-					live = false;
-					await Context.Client.SetGameAsync(null);
-					cdg.running = false;
-				}
-				else if (cdg.live)										//this is if they only typed live
-				{
-					live = true;
-					TimeSpan timeLeft;
-					string display = "";
-					TimeSpan sleeping = TimeSpan.FromMinutes(1);
-					while (cdg.running && removalID != cdg.channel.Id)
-					{
-						timeLeft = cdg.countdown - DateTime.Now;
-						if (timeLeft > TimeSpan.FromDays(1))
-						{
-							display = $"{timeLeft.Days + 1} Days until {cdg.description}";
-							await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
-						}
-						else if (timeLeft > TimeSpan.FromHours(10))
-						{
-							display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
-							await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
-						}
-						else
-						{
-							sleeping = TimeSpan.FromSeconds(1);
-							display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
-							await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
-						}
 
-						if (sync)
-						{
-							Thread.Sleep(TimeSpan.FromSeconds(60 - DateTime.Now.Second));               //try to sync updating with start of a new minute (will probably be slightly off)
-							sync = false;
-						}
-
-						if (cdg.countdown <= DateTime.Now)
-						{
-							embed.WithDescription($"Ring Ring! The countdown has finished!");
-							embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
-							embed.WithColor(Color.Green);
-							await cdg.channel.SendMessageAsync("", false, embed.Build());
-							break;
-						}
-						Thread.Sleep(sleeping);
-					}
-					live = false;
-					await Context.Client.SetGameAsync(null);
-					cdg.running = false;
-				}
-				else
-				{
-					while (cdg.running && removalID != cdg.channel.Id)
-					{
+					if (!cdg.live)                                  //make sure sleep checks out if live is in use
 						Thread.Sleep(5000);
-						if (cdg.countdown <= DateTime.Now)
-						{
-							embed.WithDescription($"Ring Ring! The countdown has finished!");
-							embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
-							embed.WithColor(Color.Green);
-							await cdg.channel.SendMessageAsync("", false, embed.Build());
-							break;
-						}
-					}
-					cdg.running = false;
 				}
-			countdownlist.RemoveAll(x => x.running == false);
+				if (cdg.live)
+					live = false;
+				await Context.Client.SetGameAsync(null);
+				cdg.running = false;
+				countdownlist.RemoveAll(x => x.running == false);
 			});
 			MainThread.Start();
 			MainThread.IsBackground = true;
