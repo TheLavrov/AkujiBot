@@ -18,7 +18,7 @@ namespace DiscordBot.Modules
 			if (String.IsNullOrWhiteSpace(username))            //empty name check
 			{
 				var message = await ReplyAsync($"`Error: No name entered.`");
-				await Task.Delay(2000);
+				await Task.Delay(5000);
 				await message.DeleteAsync();
 				return;
 			}
@@ -26,7 +26,7 @@ namespace DiscordBot.Modules
 			if (DateTime.Now.Month != 6)            //E3 month check (June)
 			{
 				var message = await ReplyAsync($"`Error: This command only works during June, the month of E3. If it is June and you see this message, check the internal date of the system this bot is running on.`");
-				await Task.Delay(2000);
+				await Task.Delay(5000);
 				await message.DeleteAsync();
 				return;
 			}
@@ -53,8 +53,6 @@ namespace DiscordBot.Modules
 				catch (HttpRequestException e)
 				{
 					var message = await Context.User.SendMessageAsync($"`Error: {e.Message}`");
-					await Task.Delay(2000);
-					await message.DeleteAsync();
 					return;
 				}
 			}
