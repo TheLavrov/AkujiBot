@@ -25,57 +25,55 @@ namespace DiscordBot.Modules
 				countdown = cd;
 				description = d;
 				running = true;
+
 				if (ex.ToLower().Contains("majora"))
-				{
 					majora = true;
-				}
 				if (ex.ToLower().Contains("live"))
-				{
 					live = true;
-				}
 			}
 		}
 
-		public static ulong removalID = 0;
-		public static bool live = false;
-		public static List<CountdownGroup> countdownlist = new List<CountdownGroup>();
-
-		public async Task<bool> LiveCountdown(TimeSpan timeLeft, CountdownGroup cdg)
+		public async Task<bool> LiveCountdown(CountdownGroup cdg)
 		{
 			TimeSpan sleeping = TimeSpan.FromMinutes(1);
-			var embed = new EmbedBuilder();
-			embed.WithAuthor(cdg.description);
-			string display = "";
-			timeLeft = cdg.countdown - DateTime.Now;
+			TimeSpan timeLeft = cdg.countdown - DateTime.Now;
 
 			if (timeLeft > TimeSpan.FromDays(1))
 			{
-				display = $"{timeLeft.Days + 1} Days until {cdg.description}";
+				string display = $"{timeLeft.Days + 1} Days until {cdg.description}";
 				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 			}
 			else if (timeLeft > TimeSpan.FromHours(10))
 			{
-				display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
+				string display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
 				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 			}
 			else
 			{
 				sleeping = TimeSpan.FromSeconds(1);
-				display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
+				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
 				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 			}
 
 			if (cdg.countdown <= DateTime.Now)
 			{
+				var embed = new EmbedBuilder();
+				embed.WithAuthor(cdg.description);
 				embed.WithDescription($"The countdown has finished!");
 				embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
 				embed.WithColor(Color.Green);
 				await cdg.channel.SendMessageAsync("", false, embed.Build());
 				return true;
 			}
+
 			Thread.Sleep(sleeping);
 			return false;
 		}
+
+		//global variables for countdowns
+		public static ulong removalID = 0;
+		public static bool live = false;
+		public static List<CountdownGroup> countdownlist = new List<CountdownGroup>();
 
 		[Command("countdown", RunMode = RunMode.Async)]
 		[Remarks("countdown \"[name of countdown]\" \"[MM/DD/YYYY]\"")]
@@ -126,7 +124,7 @@ namespace DiscordBot.Modules
 				return;
 			}
 
-			if (String.IsNullOrWhiteSpace(name))
+			if (String.IsNullOrWhiteSpace(name))					//remove countdowns of a specific channel
 			{
 				foreach (var cd in countdownlist)
 				{
@@ -142,7 +140,7 @@ namespace DiscordBot.Modules
 				return;
 			}
 
-			if (!DateTime.TryParse(dateString, out DateTime countdown))
+			if (!DateTime.TryParse(dateString, out DateTime countdown))						//if time format doesnt work
 			{
 				var message = await ReplyAsync($"`Error: Unable to recognize the time format inputted.`");
 				await Task.Delay(2000);
@@ -150,7 +148,7 @@ namespace DiscordBot.Modules
 				return;
 			}
 
-			if (countdown <= DateTime.Now)
+			if (countdown <= DateTime.Now)					//if a countdown is already done
 			{
 				var message = await ReplyAsync($"`Error: This time already happened!`");
 				await Task.Delay(2000);
@@ -158,7 +156,7 @@ namespace DiscordBot.Modules
 				return;
 			}
 
-			if (live && extra.Contains("live"))
+			if (live && extra.Contains("live"))				//if a live countdown is already working
 			{
 				var message = await ReplyAsync($"`Error: There is currently a live countdown already in use. Please wait for that to finish.`");
 				await Task.Delay(2000);
@@ -192,7 +190,7 @@ namespace DiscordBot.Modules
 					if (cdg.live)                                                                   // if user puts both majora and live (majoralive)
 					{
 						live = true;
-						bool currentcountdown = await LiveCountdown(cdg.countdown - DateTime.Now, cdg);
+						bool currentcountdown = await LiveCountdown(cdg);
 						if (sync && (cdg.countdown - DateTime.Now) > TimeSpan.FromHours(10))
 						{
 							Thread.Sleep(TimeSpan.FromSeconds(60 - DateTime.Now.Second));               //try to sync updating with start of a new minute (will probably be slightly off)
