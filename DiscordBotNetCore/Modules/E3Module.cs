@@ -39,6 +39,8 @@ namespace DiscordBot.Modules
 				try
 				{
 					var generate = await client.GetAsync(url + username);
+					await Task.Delay(TimeSpan.FromSeconds(1));
+					generate = await client.GetAsync(url + imagePath);
 					generate.EnsureSuccessStatusCode();
 
 					var embed = new EmbedBuilder();
@@ -50,7 +52,7 @@ namespace DiscordBot.Modules
 				}
 				catch (HttpRequestException e)
 				{
-					var message = await ReplyAsync($"`Error: {e.Message}`");
+					var message = await Context.User.SendMessageAsync($"`Error: {e.Message}`");
 					await Task.Delay(2000);
 					await message.DeleteAsync();
 					return;
