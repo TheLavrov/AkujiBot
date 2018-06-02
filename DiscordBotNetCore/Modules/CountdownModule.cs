@@ -85,7 +85,7 @@ namespace DiscordBot.Modules
 				var embed = new EmbedBuilder();
 				embed.WithAuthor($"Currently running countdowns in {Context.Channel.Name}");
 				embed.WithColor(Color.DarkBlue);
-				var fail = true;
+				var found = false;
 				foreach (var cdl in countdownlist)
 				{
 					if ((cdl.channel == Context.Channel || cdl.live) && cdl.running)
@@ -93,19 +93,17 @@ namespace DiscordBot.Modules
 						TimeSpan timeLeft = cdl.countdown - DateTime.Now;
 						string days = "";
 						string isLive = "";
+
 						if (timeLeft > TimeSpan.FromDays(1))
-						{
 							days = $"{timeLeft.Days}:";
-						}
 						if (cdl.live)
-						{
 							isLive = $" (Live)";
-						}
+						
 						embed.AddField(cdl.description + isLive, $"{days}{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")}\n{cdl.countdown.ToString("f")}");
-						fail = false;
+						found = true;
 					}
 				}
-				if (fail)
+				if (!found)
 				{
 					var message = await ReplyAsync($"`No countdowns are currently running on this channel.`");
 					await Task.Delay(2000);
@@ -129,9 +127,7 @@ namespace DiscordBot.Modules
 				foreach (var cd in countdownlist)
 				{
 					if (cd.channel == Context.Channel)
-					{
 						cd.running = false;
-					}
 				}
 				removalID = Context.Channel.Id;
 				var message = await ReplyAsync($"`Removing all countdowns in this channel. May take a bit if a live countdown is being removed.`");
