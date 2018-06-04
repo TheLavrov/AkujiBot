@@ -4,7 +4,6 @@ using Easy.Common;
 using Easy.Common.Interfaces;
 using System;
 using System.Net.Http;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace DiscordBot.Modules
@@ -33,7 +32,7 @@ namespace DiscordBot.Modules
 			}
 
 			string url = "http://e3.novaember.com/";
-			username = Regex.Replace(username.ToLower(), "[^a-zA-Z]", "");				//remove non-letters, make lowercase
+			username = username.ToLower();				//remove non-letters, make lowercase
 
 			string imagePath = $"cards-{DateTime.Now.Year}/{username}.png";
 
