@@ -35,7 +35,7 @@ namespace DiscordBot.Modules
 
 		public async Task<bool> LiveCountdown(CountdownGroup cdg)
 		{
-			TimeSpan sleeping = TimeSpan.FromMinutes(1);
+			TimeSpan sleeping = TimeSpan.FromMinutes(1);            //avoid ratelimiting by delaying each use of SetGameAsync
 			TimeSpan timeLeft = cdg.countdown - DateTime.Now;
 
 			if (timeLeft > TimeSpan.FromDays(1))
@@ -50,8 +50,7 @@ namespace DiscordBot.Modules
 			}
 			else
 			{
-				sleeping = TimeSpan.FromSeconds(1);
-				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:{timeLeft.Seconds.ToString("D2")} until {cdg.description}";
+				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")} until {cdg.description}";
 				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
 			}
 
