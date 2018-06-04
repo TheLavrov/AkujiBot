@@ -5,6 +5,7 @@ using Easy.Common.Interfaces;
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace DiscordBot.Modules
 {
@@ -13,7 +14,7 @@ namespace DiscordBot.Modules
 		[Command("bongo")]
 		[Remarks("bongo [Facepunch username]")]
 		[Summary("Generates your E3 bongo card using your Facepunch username. Make sure you allow DMs from users in this channel so the bot can send you the card.")]
-		public async Task Bongo(string username = " ")
+		public async Task Bongo([Remainder] string username = " ")
 		{			
 			if (String.IsNullOrWhiteSpace(username))            //empty name check
 			{
@@ -32,7 +33,7 @@ namespace DiscordBot.Modules
 			}
 
 			string url = "http://e3.novaember.com/";
-			username = username.ToLower();				//remove non-letters, make lowercase
+			username = HttpUtility.UrlEncode(username.ToLower());				//remove non-letters, make lowercase
 
 			string imagePath = $"cards-{DateTime.Now.Year}/{username}.png";
 
