@@ -11,7 +11,7 @@ namespace DiscordBot.Modules
 {
     public class E3Module : ModuleBase<SocketCommandContext>
 	{
-		[Command("bongo")]
+		[Command("bongo", RunMode = RunMode.Async)]
 		[Remarks("bongo [Facepunch username]")]
 		[Summary("Generates your E3 bongo card using your Facepunch username. Make sure you allow DMs from users in this channel so the bot can send you the card.")]
 		public async Task Bongo([Remainder] string username = " ")
@@ -42,7 +42,6 @@ namespace DiscordBot.Modules
 				try
 				{
 					var generate = await client.GetAsync(url + username);
-					await Task.Delay(TimeSpan.FromSeconds(1));
 					generate = await client.GetAsync(url + imagePath);
 					generate.EnsureSuccessStatusCode();
 
