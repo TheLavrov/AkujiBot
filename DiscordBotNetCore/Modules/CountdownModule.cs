@@ -19,21 +19,28 @@ namespace DiscordBot.Modules
 			public bool majora = false;
 			public bool live = false;
 			public bool running = false;
-			public CountdownGroup(Discord.WebSocket.ISocketMessageChannel chnl, DateTime cd, string d = " ", string ex = " ")
+			public string streamlink = null;
+			public CountdownGroup(Discord.WebSocket.ISocketMessageChannel chnl, DateTime cd, string d = " ", string stream = null, string ex = " ")
 			{
 				channel = chnl;
 				countdown = cd;
 				description = d;
 				running = true;
 
-				if (ex.ToLower().Contains("majora"))
+				Uri uriResult;
+				bool result = Uri.TryCreate(streamlink, UriKind.Absolute, out uriResult)
+					&& (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+
+				if ((stream.ToLower() != "majora" || stream.ToLower() != "live" || !String.IsNullOrWhiteSpace(streamlink)) && result)
+					streamlink = stream;
+				if (ex.ToLower().Contains("majora") || stream.ToLower() == "majora")
 					majora = true;
-				if (ex.ToLower().Contains("live"))
+				if (ex.ToLower().Contains("live") || stream.ToLower() == "live")
 					live = true;
 			}
 		}
 
-		public async Task<bool> LiveCountdown(CountdownGroup cdg)
+		public async Task<bool> LiveCountdown(CountdownGroup cdg, int stream = (int)ActivityType.Watching)
 		{
 			TimeSpan sleeping = TimeSpan.FromMinutes(1);            //avoid ratelimiting by delaying each use of SetGameAsync
 			TimeSpan timeLeft = cdg.countdown - DateTime.Now;
@@ -41,17 +48,17 @@ namespace DiscordBot.Modules
 			if (timeLeft > TimeSpan.FromDays(1))
 			{
 				string display = $"{timeLeft.Days + 1} Days until {cdg.description}";
-				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
 			else if (timeLeft > TimeSpan.FromHours(10))
 			{
 				string display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
-				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
 			else
 			{
-				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")} until {cdg.description}";
-				await Context.Client.SetGameAsync($"{display}", null, ActivityType.Watching);
+				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:XX until {cdg.description}";
+				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
 
 			if (cdg.countdown <= DateTime.Now)
@@ -75,9 +82,9 @@ namespace DiscordBot.Modules
 		public static List<CountdownGroup> countdownlist = new List<CountdownGroup>();
 
 		[Command("countdown", RunMode = RunMode.Async)]
-		[Remarks("countdown \"[name of countdown]\" \"[MM/DD/YYYY]\"")]
-		[Summary("(ADMIN ONLY) Initializes a countdown. Leaving countdown blank will close any countdowns active. Writing \"countdown list\" will display all running countdowns for a channel. Make sure to put quotes around your date and name value.")]
-		public async Task Countdown(string name = " ", string dateString = " ", string extra = " ")
+		[Remarks("countdown \"[name of countdown]\" \"[MM/DD/YYYY]\" \"[Optional stream link]\" <live, majora>")]
+		[Summary("(ADMIN ONLY) Initializes a countdown. Leaving countdown blank will close any countdowns active. Writing \"countdown list\" will display all running countdowns for a channel. Make sure to put quotes around your date and name values.")]
+		public async Task Countdown(string name = " ", string dateString = " ", string streamlink = null, [Remainder] string extra = " ")
 		{
 			if (name == "list")									//non admins can list countdowns just fine
 			{
@@ -160,18 +167,19 @@ namespace DiscordBot.Modules
 			}
 
 			removalID = 0;
-			var cdg = new CountdownGroup(Context.Channel, countdown, name, extra);
+			var cdg = new CountdownGroup(Context.Channel, countdown, name, streamlink, extra);
 			countdownlist.Add(cdg);
 
 			var MainThread = new Thread(async () =>
 			{
-				var message = await ReplyAsync($"`Countdown initialized.`");
-				await Task.Delay(2000);
+				var message = await ReplyAsync($"`Countdown initializing...`");
+				Thread.Sleep(2000);
 				await message.DeleteAsync();
 				int majora = 0;
 				var embed = new EmbedBuilder();
 				embed.WithAuthor(cdg.description);
 				bool sync = true;
+				int stream = (int)ActivityType.Watching;
 
 				if (cdg.countdown <= DateTime.Now.AddHours(72))                                     //set majora int to avoid posting images pointlessly
 					majora++;
@@ -180,13 +188,16 @@ namespace DiscordBot.Modules
 				if (cdg.countdown <= DateTime.Now.AddHours(24))
 					majora++;
 
+				if (!String.IsNullOrWhiteSpace(cdg.streamlink))
+					stream = (int)ActivityType.Streaming; 
+
 				while (cdg.running && removalID != cdg.channel.Id)
 				{
 					if (cdg.live)                                                                   // if user puts both majora and live (majoralive)
 					{
 						live = true;
-						bool currentcountdown = await LiveCountdown(cdg);
-						if (sync && (cdg.countdown - DateTime.Now) > TimeSpan.FromHours(10))
+						bool currentcountdown = await LiveCountdown(cdg, stream);
+						if (sync && (cdg.countdown - DateTime.Now) > TimeSpan.FromMinutes(1))
 						{
 							Thread.Sleep(TimeSpan.FromSeconds(60 - DateTime.Now.Second));               //try to sync updating with start of a new minute (will probably be slightly off)
 							sync = false;
@@ -219,10 +230,16 @@ namespace DiscordBot.Modules
 					
 					if (cdg.countdown <= DateTime.Now)
 					{
+						string streamtemp = null;
 						embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
+
 						if(cdg.majora)
 							embed.WithImageUrl("https://i.imgur.com/Nu3dray.png");
-						embed.WithDescription($"The countdown has finished!");
+
+						if (!String.IsNullOrWhiteSpace(cdg.streamlink))
+							streamtemp = $"\n[Click here to be taken to the URL associated with the countdown!]({cdg.streamlink})";
+						
+						embed.WithDescription($"The countdown has finished!" + streamtemp);
 						embed.WithColor(Color.Green);
 						await cdg.channel.SendMessageAsync("", false, embed.Build());
 						break;
