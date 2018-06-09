@@ -231,10 +231,13 @@ namespace DiscordBot.Modules
 					if (cdg.countdown <= DateTime.Now)
 					{
 						string streamtemp = null;
-						embed.WithImageUrl("https://i.imgur.com/MQEr5Mp.png");
+						embed.WithThumbnailUrl("https://i.imgur.com/MQEr5Mp.png");
 
-						if(cdg.majora)
+						if (cdg.majora)
+						{
 							embed.WithImageUrl("https://i.imgur.com/Nu3dray.png");
+							embed.WithThumbnailUrl(null);
+						}
 
 						if (!String.IsNullOrWhiteSpace(cdg.streamlink))
 							streamtemp = $"\n[Click here to be taken to the URL associated with the countdown!]({cdg.streamlink})";
