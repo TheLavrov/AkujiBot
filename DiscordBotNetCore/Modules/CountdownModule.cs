@@ -28,7 +28,7 @@ namespace DiscordBot.Modules
 				running = true;
 
 				Uri uriResult;
-				bool result = Uri.TryCreate(streamlink, UriKind.Absolute, out uriResult)
+				bool result = Uri.TryCreate(stream, UriKind.Absolute, out uriResult)
 					&& (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
 
 				if ((stream.ToLower() != "majora" || stream.ToLower() != "live" || !String.IsNullOrWhiteSpace(streamlink)) && result)
