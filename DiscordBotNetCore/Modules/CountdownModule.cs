@@ -57,7 +57,7 @@ namespace DiscordBot.Modules
 			}
 			else
 			{
-				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}:XX until {cdg.description}";
+				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")} until {cdg.description}";
 				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
 
