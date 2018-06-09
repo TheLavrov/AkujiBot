@@ -24,52 +24,64 @@ namespace DiscordBot.Modules
 			List<IMessage> MsgsToDelete = new List<IMessage>();																				//Creates a new IMessage List for storing the messages to delete
 			if (text.Contains("@all"))
 				dumpAmount = 20;
-			var dump = await channel.GetMessagesAsync(dumpAmount, CacheMode.AllowDownload, null).FlattenAsync();									//Gets the last bunch of messages from the channel (limit 50)
+			var dump = await channel.GetMessagesAsync(dumpAmount, CacheMode.AllowDownload, null).FlattenAsync();                                    //Gets the last bunch of messages from the channel (limit 50)
 
 			if (string.IsNullOrWhiteSpace(text))
 			{
-				foreach (var content in dump)																								//for every message in the message dump...
+				foreach (var content in dump)                                                                                               //for every message in the message dump...
 				{
-					if ((content.Author.Id == BotID || content.Content.StartsWith(Config.Load().Prefix)) && content.Timestamp > twoweeks)	//if the message has the bot's ID or the message starts with the command prefix...
+					if ((content.Author.Id == BotID || content.Content.StartsWith(Config.Load().Prefix)) && content.Timestamp > twoweeks)   //if the message has the bot's ID or the message starts with the command prefix...
 					{
-						MsgsToDelete.Add(content);																						    //add it to the IMessage List
+						MsgsToDelete.Add(content);                                                                                          //add it to the IMessage List
+					}
+				}
+			}
+			else if (text.Contains("@users"))
+			{
+				foreach (var content in dump)                                                                                               //for every message in the message dump...
+				{
+					if (content.Content.StartsWith(Config.Load().Prefix) && content.Timestamp > twoweeks)									//if the message starts with the command prefix...
+					{
+						MsgsToDelete.Add(content);                                                                                          //add it to the IMessage List
 					}
 				}
 			}
 			else
 			{
-				admin = Config.Load().IsAdmin(Context.User.Id);																				//check if they're an admin
-				if (!admin)																													//if not then they can't do this
+				admin = Config.Load().IsAdmin(Context.User.Id);                                                                             //check if they're an admin
+				if (!admin)                                                                                                                 //if not then they can't do this
 				{
 					await Context.Message.DeleteAsync();
 					await ReplyAsync($"`Only admins can do this.`");
 					return;
 				}
-				if (!text.Contains("@all"))
+
+				if (text.Contains("@all"))
 				{
-					foreach (var content in dump)																							//for every message in the message dump...
+					foreach (var content in dump)                                                                           //for every message in the message dump...
+					{
+						if (content.Timestamp > twoweeks)                                                                   //if the message is young enough...
+						{
+							MsgsToDelete.Add(content);                                                                      //add it to the IMessage List
+						}
+					}
+				}
+				else
+				{
+					foreach (var content in dump)                                                                                           //for every message in the message dump...
 					{
 						foreach (var person in Context.Message.MentionedUsers)
 						{
-							if (content.Author.Id == person.Id && content.Timestamp > twoweeks)												//if the message has the user's ID and is young enough... 
+							if (content.Author.Id == person.Id && content.Timestamp > twoweeks)                                             //if the message has the user's ID and is young enough... 
 							{
-								MsgsToDelete.Add(content);																					//add it to the IMessage List
+								MsgsToDelete.Add(content);                                                                                  //add it to the IMessage List
 							}
 						}
 
 					}
 				}
-				else
-				{
-					foreach (var content in dump)                                                                           //for every message in the message dump...
-					{
-						if (content.Timestamp > twoweeks)																	//if the message is young enough...
-						{
-							MsgsToDelete.Add(content);																		//add it to the IMessage List
-						}
-					}
-				}
-				
+
+
 			}
 
 			if (MsgsToDelete.Count - 1 == 1) { s = ""; }                                                                        //This is just for formatting if it only deletes one message
