@@ -32,6 +32,7 @@ namespace DiscordBot.Modules
 				public string image { get; set; }
 				public string name { get; set; }
 				public Special special { get; set; }
+				public CoopSpecialWeapon coop_special_weapon { get; set; }
 				public class Sub
 				{
 					public string name { get; set; }
@@ -45,6 +46,11 @@ namespace DiscordBot.Modules
 					public string id { get; set; }
 					public string name { get; set; }
 					public string image_a { get; set; }
+				}
+				public class CoopSpecialWeapon
+				{
+					public string name { get; set; }
+					public string image { get; set; }
 				}
 			}
 		}
@@ -344,10 +350,10 @@ namespace DiscordBot.Modules
 					string weaponList = "";
 					foreach (var weapon in salmonrun.details[latest].weapons)
 					{
-						if (weapon != null)
+						if (!String.IsNullOrWhiteSpace(weapon.coop_special_weapon.name))
+							weaponList += weapon.coop_special_weapon.name + '\n';
+						else if (weapon != null)
 							weaponList += weapon.name + '\n';
-						else
-							weaponList += "A Random Item?" + '\n';
 					}
 					embed.AddField("Weapons Given", weaponList);
 					embed.WithFooter("Time is displayed in Pacific Standard Time (PST). Data is taken from the splatoon2.ink website.", null);
