@@ -331,39 +331,29 @@ namespace DiscordBot.Modules
 				if (IsLive)
 				{
 					embed.WithAuthor("Salmon Run is live!", null);
-					embed.WithThumbnailUrl(nintendouri + salmonrun.details[latest].stage.image);
-					embed.WithDescription($"Time Started: {ScheduleTimePST.LocalDateTime} PST \nTime Left: {(TimeLeft.Days * 24) + TimeLeft.Hours} Hours, {TimeLeft.Minutes} Minutes, {TimeLeft.Seconds} Seconds");
+					embed.WithDescription($"Time Started: {ScheduleTimePST.LocalDateTime} ({TimeZoneInfo.Local.StandardName}) \nTime Left: {(TimeLeft.Days * 24) + TimeLeft.Hours} Hours, {TimeLeft.Minutes} Minutes, {TimeLeft.Seconds} Seconds");
 					embed.AddField("Current Stage", salmonrun.details[latest].stage.name);
-					string weaponList = "";
-					foreach (var weapon in salmonrun.details[latest].weapons)
-					{
-						if (!String.IsNullOrWhiteSpace(weapon.coop_special_weapon.name))
-							weaponList += weapon.coop_special_weapon.name + '\n';
-						else if (weapon != null)
-							weaponList += weapon.weapon.name + '\n';
-					}
-					embed.AddField("Weapons Given", weaponList);
-					embed.WithFooter("Time is displayed in Pacific Standard Time (PST). Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(144, 186, 60);
 				}
 				else
 				{
 					embed.WithAuthor("Salmon Run is down.", null);
-					embed.WithThumbnailUrl(nintendouri + salmonrun.details[latest].stage.image);
-					embed.WithDescription($"Next Run: {ScheduleTimePST.LocalDateTime} PST \nWill Start At: {(TimeUntil.Days * 24) + TimeUntil.Hours} Hours, {TimeUntil.Minutes} Minutes, {TimeUntil.Seconds} Seconds");
+					embed.WithDescription($"Next Run: {ScheduleTimePST.LocalDateTime} ({TimeZoneInfo.Local.StandardName}) \nWill Start At: {(TimeUntil.Days * 24) + TimeUntil.Hours} Hours, {TimeUntil.Minutes} Minutes, {TimeUntil.Seconds} Seconds");
 					embed.AddField("Next Stage", salmonrun.details[latest].stage.name);
-					string weaponList = "";
-					foreach (var weapon in salmonrun.details[latest].weapons)
-					{
-						if (!String.IsNullOrWhiteSpace(weapon.coop_special_weapon.name))
-							weaponList += weapon.coop_special_weapon.name + '\n';
-						else if (weapon != null)
-							weaponList += weapon.weapon.name + '\n';
-					}
-					embed.AddField("Weapons Given", weaponList);
-					embed.WithFooter("Time is displayed in Pacific Standard Time (PST). Data is taken from the splatoon2.ink website.", null);
 					embed.Color = new Color(153, 0, 0);
+				}					
+				embed.WithThumbnailUrl(nintendouri + salmonrun.details[latest].stage.image);
+				string weaponList = "";
+				foreach (var weapon in salmonrun.details[latest].weapons)
+				{
+					if (!String.IsNullOrWhiteSpace(weapon.coop_special_weapon.name))
+						weaponList += weapon.coop_special_weapon.name + '\n';
+					else if (weapon != null)
+						weaponList += weapon.weapon.name + '\n';
 				}
+				embed.AddField("Weapons Given", weaponList);
+				embed.WithFooter("Data is taken from the splatoon2.ink website.", null);					
+				
 
 				await ReplyAsync("", false, embed.Build());
 			}		
