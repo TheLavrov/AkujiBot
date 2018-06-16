@@ -291,6 +291,7 @@ namespace DiscordBot.Modules
 
 			using (IRestClient client = new RestClient())
 			{
+				client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.2; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0");
 				salmonrunurl = await client.GetStringAsync(salmonrunurl);
 				var salmonrun = JsonConvert.DeserializeObject<SalmonRun>(salmonrunurl);
 				
