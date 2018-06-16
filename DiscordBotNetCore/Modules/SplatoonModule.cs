@@ -17,36 +17,41 @@ namespace DiscordBot.Modules
 			public int start_time { get; set; }
 			public int end_time { get; set; }
 			public Stage stage { get; set; }
-			public List<Weapon> weapons { get; set; }
+			public List<Weapons> weapons { get; set; }
 			public class Stage
 			{
 				public string id { get; set; }
 				public string name { get; set; }
 				public string image { get; set; }
 			}
-			public class Weapon
+			public class Weapons
 			{
-				public string thumbnail { get; set; }
-				public Sub sub { get; set; }
 				public string id { get; set; }
-				public string image { get; set; }
-				public string name { get; set; }
-				public Special special { get; set; }
+				public Weapon weapon { get; set; }
+				public class Weapon
+				{
+					public string thumbnail { get; set; }
+					public Sub sub { get; set; }
+					public string id { get; set; }
+					public string image { get; set; }
+					public string name { get; set; }
+					public Special special { get; set; }
+					public class Sub
+					{
+						public string name { get; set; }
+						public string image_a { get; set; }
+						public string id { get; set; }
+						public string image_b { get; set; }
+					}
+					public class Special
+					{
+						public string image_b { get; set; }
+						public string id { get; set; }
+						public string name { get; set; }
+						public string image_a { get; set; }
+					}
+				}
 				public CoopSpecialWeapon coop_special_weapon { get; set; }
-				public class Sub
-				{
-					public string name { get; set; }
-					public string image_a { get; set; }
-					public string id { get; set; }
-					public string image_b { get; set; }
-				}
-				public class Special
-				{
-					public string image_b { get; set; }
-					public string id { get; set; }
-					public string name { get; set; }
-					public string image_a { get; set; }
-				}
 				public class CoopSpecialWeapon
 				{
 					public string name { get; set; }
@@ -332,10 +337,10 @@ namespace DiscordBot.Modules
 					string weaponList = "";
 					foreach (var weapon in salmonrun.details[latest].weapons)
 					{
-						if (weapon != null)
-							weaponList += weapon.name + '\n';
-						else
-							weaponList += "A Random Item?" + '\n';
+						if (!String.IsNullOrWhiteSpace(weapon.coop_special_weapon.name))
+							weaponList += weapon.coop_special_weapon.name + '\n';
+						else if (weapon != null)
+							weaponList += weapon.weapon.name + '\n';
 					}
 					embed.AddField("Weapons Given", weaponList);
 					embed.WithFooter("Time is displayed in Pacific Standard Time (PST). Data is taken from the splatoon2.ink website.", null);
@@ -353,7 +358,7 @@ namespace DiscordBot.Modules
 						if (!String.IsNullOrWhiteSpace(weapon.coop_special_weapon.name))
 							weaponList += weapon.coop_special_weapon.name + '\n';
 						else if (weapon != null)
-							weaponList += weapon.name + '\n';
+							weaponList += weapon.weapon.name + '\n';
 					}
 					embed.AddField("Weapons Given", weaponList);
 					embed.WithFooter("Time is displayed in Pacific Standard Time (PST). Data is taken from the splatoon2.ink website.", null);
