@@ -344,12 +344,12 @@ namespace DiscordBot.Modules
 				}					
 				embed.WithThumbnailUrl(nintendouri + salmonrun.details[latest].stage.image);
 				string weaponList = "";
-				foreach (var weapon in salmonrun.details[latest].weapons)
+				foreach (var currentWeapon in salmonrun.details[latest].weapons)
 				{
-					if (!String.IsNullOrWhiteSpace(weapon.coop_special_weapon.name))
-						weaponList += weapon.coop_special_weapon.name + '\n';
-					else if (weapon != null)
-						weaponList += weapon.weapon.name + '\n';
+					if (!String.IsNullOrWhiteSpace(currentWeapon.coop_special_weapon.name))
+						weaponList += currentWeapon.coop_special_weapon.name + '\n';
+					else if (!String.IsNullOrWhiteSpace(currentWeapon.weapon.name))
+						weaponList += currentWeapon.weapon.name + '\n';
 				}
 				embed.AddField("Weapons Given", weaponList);
 				embed.WithFooter("Data is taken from the splatoon2.ink website.", null);					
