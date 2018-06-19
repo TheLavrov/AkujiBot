@@ -345,9 +345,9 @@ namespace DiscordBot.Modules
 				string weaponList = "";
 				foreach (var currentWeapon in salmonrun.details[latest].weapons)
 				{
-					if (!String.IsNullOrWhiteSpace(currentWeapon.coop_special_weapon.name))
+					if (currentWeapon.coop_special_weapon != null)
 						weaponList += currentWeapon.coop_special_weapon.name + '\n';
-					else if (!String.IsNullOrWhiteSpace(currentWeapon.weapon.name))
+					else if (currentWeapon.weapon != null)
 						weaponList += currentWeapon.weapon.name + '\n';
 				}
 				embed.AddField("Weapons Given", weaponList);
