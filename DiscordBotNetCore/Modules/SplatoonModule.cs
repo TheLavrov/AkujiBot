@@ -350,6 +350,8 @@ namespace DiscordBot.Modules
 					else if (currentWeapon.weapon != null)
 						weaponList += currentWeapon.weapon.name + '\n';
 				}
+				if (String.IsNullOrWhiteSpace(weaponList))
+					weaponList = "(Error)";
 				embed.AddField("Weapons Given", weaponList);
 				embed.WithFooter("Data is taken from the splatoon2.ink website.", null);					
 				
