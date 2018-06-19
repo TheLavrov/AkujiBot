@@ -34,7 +34,7 @@ namespace DiscordBot.Modules
 					public Sub sub { get; set; }
 					public string id { get; set; }
 					public string image { get; set; }
-					public string name { get; set; }
+					public string name { get; set; } = null;
 					public Special special { get; set; }
 					public class Sub
 					{
@@ -54,7 +54,7 @@ namespace DiscordBot.Modules
 				public CoopSpecialWeapon coop_special_weapon { get; set; }
 				public class CoopSpecialWeapon
 				{
-					public string name { get; set; }
+					public string name { get; set; } = null;
 					public string image { get; set; }
 				}
 			}
@@ -302,7 +302,6 @@ namespace DiscordBot.Modules
 
 			using (IRestClient client = new RestClient())
 			{
-				client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.2; WOW64; rv:19.0) Gecko/20100101 Firefox/19.0");
 				salmonrunurl = await client.GetStringAsync(salmonrunurl);
 				var salmonrun = JsonConvert.DeserializeObject<SalmonRun>(salmonrunurl);
 				
@@ -310,13 +309,13 @@ namespace DiscordBot.Modules
 				int latest = 0;
 				for (int i = 0; i < salmonrun.details.Count; i++)
 				{
-					if (Context.Message.Timestamp.ToUnixTimeSeconds() >= salmonrun.details[i].start_time && Context.Message.Timestamp.ToUnixTimeSeconds() < salmonrun.details[i].end_time)
+					if (DateTimeOffset.Now.ToUnixTimeSeconds() >= salmonrun.details[i].start_time && DateTimeOffset.Now.ToUnixTimeSeconds() < salmonrun.details[i].end_time)
 					{
 						IsLive = true;
 						latest = i;
 						break;
 					}
-					if (Context.Message.Timestamp.ToUnixTimeSeconds() < salmonrun.details[i].start_time)
+					if (DateTimeOffset.Now.ToUnixTimeSeconds() < salmonrun.details[i].start_time)
 					{
 						IsLive = false;
 						latest = i;
@@ -324,21 +323,21 @@ namespace DiscordBot.Modules
 					}
 				}
 
-				var ScheduleTimePST = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time);
+				var ScheduleTimeLocal = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time);
 				var TimeLeft = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].end_time).LocalDateTime - DateTimeOffset.Now;
 				var TimeUntil = DateTimeOffset.FromUnixTimeSeconds(salmonrun.details[latest].start_time).LocalDateTime - DateTimeOffset.Now;
 
 				if (IsLive)
 				{
 					embed.WithAuthor("Salmon Run is live!", null);
-					embed.WithDescription($"Time Started: {ScheduleTimePST.LocalDateTime} ({TimeZoneInfo.Local.StandardName}) \nTime Left: {(TimeLeft.Days * 24) + TimeLeft.Hours} Hours, {TimeLeft.Minutes} Minutes, {TimeLeft.Seconds} Seconds");
+					embed.WithDescription($"Time Started: {ScheduleTimeLocal.LocalDateTime} ({TimeZoneInfo.Local.StandardName}) \nTime Left: {(TimeLeft.Days * 24) + TimeLeft.Hours} Hours, {TimeLeft.Minutes} Minutes, {TimeLeft.Seconds} Seconds");
 					embed.AddField("Current Stage", salmonrun.details[latest].stage.name);
 					embed.Color = new Color(144, 186, 60);
 				}
 				else
 				{
 					embed.WithAuthor("Salmon Run is down.", null);
-					embed.WithDescription($"Next Run: {ScheduleTimePST.LocalDateTime} ({TimeZoneInfo.Local.StandardName}) \nWill Start At: {(TimeUntil.Days * 24) + TimeUntil.Hours} Hours, {TimeUntil.Minutes} Minutes, {TimeUntil.Seconds} Seconds");
+					embed.WithDescription($"Next Run: {ScheduleTimeLocal.LocalDateTime} ({TimeZoneInfo.Local.StandardName}) \nWill Start At: {(TimeUntil.Days * 24) + TimeUntil.Hours} Hours, {TimeUntil.Minutes} Minutes, {TimeUntil.Seconds} Seconds");
 					embed.AddField("Next Stage", salmonrun.details[latest].stage.name);
 					embed.Color = new Color(153, 0, 0);
 				}					
