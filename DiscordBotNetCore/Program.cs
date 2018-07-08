@@ -107,10 +107,7 @@ namespace DiscordBot
 
 			// Create a number to track where the prefix ends and the command begins
 			int pos = 0;
-			// Replace the '!' with whatever character
-			// you want to prefix your commands with.
-			// Uncomment the second half if you also want
-			// commands to be invoked by mentioning the bot instead.
+			// Uncomment the second half if you want commands to be invoked by mentioning the bot instead.
 			if (msg.HasCharPrefix(Config.Load().Prefix, ref pos) /* || msg.HasMentionPrefix(_client.CurrentUser, ref pos) */)
 			{
 				// Create a Command Context
