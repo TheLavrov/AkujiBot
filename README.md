@@ -21,3 +21,14 @@ dotnet build
 dotnet run
 ```
 
+## Configuration
+
+The program will generate a `configuration.json` in `DiscordAppNetCore/bin/Debug`.
+
+```
+"Owners": Adding your Discord ID to this list will allow you to use admin commands.
+"Prefix": What symbol you type before a command's name.
+"Token": Where your bot token goes.
+"Volume": Volume for audio-related commands.
+"consumerKey", "consumerSecret", "userAccessToken", "userAccessSecret": Used for Twitter commands like "live". If you don't care about Twitter LEAVE THESE BLANK.
+```
