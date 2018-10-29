@@ -17,11 +17,10 @@ namespace DiscordBot.Modules
 		public async Task FriendCodeAdd(string choice, [Remainder] string fc)
 		{
 			string FileName = "config/database.sqlite";
+			choice = choice.ToLower();
+			
 			if(choice == "switch" || choice == "3ds")
-			{
-				choice = choice.ToLower();
 				fc = Regex.Replace(fc, "[^0-9]", "");
-			}
 			
 			if (((choice == "switch" || choice == "3ds") && fc.Length == 12) || choice == "wiiu")
 			{
