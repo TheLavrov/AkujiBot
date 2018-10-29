@@ -14,12 +14,16 @@ namespace DiscordBot.Modules
 		[Command("fcadd")]
 		[Remarks("fcadd [switch, 3ds, wiiu] [12 digit code]")]
 		[Summary("Allows you to add a friend code to yourself.")]
-		public async Task FriendCodeAdd(string choice, string fc)
+		public async Task FriendCodeAdd(string choice, [Remainder] string fc)
 		{
 			string FileName = "config/database.sqlite";
-			choice = choice.ToLower();
-			fc = Regex.Replace(fc, "[^0-9]", "");
-			if ((choice == "switch" || choice == "3ds" || choice == "wiiu") && fc.Length == 12)
+			if(choice == "switch" || choice == "3ds")
+			{
+				choice = choice.ToLower();
+				fc = Regex.Replace(fc, "[^0-9]", "");
+			}
+			
+			if (((choice == "switch" || choice == "3ds") && fc.Length == 12) || choice == "wiiu")
 			{
 
 
@@ -174,7 +178,6 @@ namespace DiscordBot.Modules
 						if (!String.IsNullOrWhiteSpace(rdr["fcwiiu"].ToString()))
 						{
 							string temp = rdr["fcwiiu"].ToString();
-							temp = temp.Substring(0, 4) + "-" + temp.Substring(4, 4) + "-" + temp.Substring(8, 4);
 							embed.AddField("Wii U", temp, true);
 							success = true;
 						}
