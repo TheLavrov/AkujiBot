@@ -24,9 +24,7 @@ namespace DiscordBot.Modules
 			
 			if (((choice == "switch" || choice == "3ds") && fc.Length == 12) || choice == "wiiu")
 			{
-
-
-				string file = Path.Combine(AppContext.BaseDirectory, FileName);
+                string file = Path.Combine(AppContext.BaseDirectory, FileName);
 				if (!File.Exists(file))                                                                                                 // Check if the configuration file exists.
 				{
 					string path = Path.GetDirectoryName(file);                                                                          // Create config directory if doesn't exist.
@@ -53,43 +51,21 @@ namespace DiscordBot.Modules
 					exists = reader.HasRows;
 					reader.Close();
 				}
-				
-				
-				if (!exists)																											// if not exists, we insert new
+
+                command = m_dbConnection.CreateCommand();
+                if (!exists)																											// if not exists, we insert new
 				{
-					switch (choice)
-					{
-						case "switch":
-							sql = $"insert into friendcode (fcswitch, id) values ('{fc}', {Context.User.Id})";
-							break;
-						case "3ds":
-							sql = $"insert into friendcode (fc3ds, id) values ('{fc}', {Context.User.Id})";
-							break;
-						case "wiiu":
-							sql = $"insert into friendcode (fcwiiu, id) values ('{fc}', {Context.User.Id})";
-							break;
-					}
+                    command.CommandText = $"insert into friendcode (fc{choice}, id) values (@fc, @param1)";
+                    command.Parameters.AddWithValue("@fc", fc);
+                    command.Parameters.AddWithValue("@param1", Context.User.Id);
 				}
 				else																													// if exists, we update current
 				{
-					switch (choice)
-					{
-						case "switch":
-							sql = $"update friendcode set fcswitch = '{fc}' where id = {Context.User.Id}";
-							break;
-						case "3ds":
-							sql = $"update friendcode set fc3ds = '{fc}' where id = {Context.User.Id}";
-							break;
-						case "wiiu":
-							sql = $"update friendcode set fcwiiu = '{fc}' where id = {Context.User.Id}";
-							break;
-					}
-				}
-
-				command = m_dbConnection.CreateCommand();
-				command.CommandText = sql;
+                    command.CommandText = $"update friendcode set fc{choice} = @fc where id = @param1";
+                    command.Parameters.AddWithValue("@fc", fc);
+                    command.Parameters.AddWithValue("@param1", Context.User.Id);
+				}			
 				command.ExecuteNonQuery();
-
 				m_dbConnection.Close();																									// close connection
 
 				var message = await ReplyAsync($"`Friend code saved.`");
