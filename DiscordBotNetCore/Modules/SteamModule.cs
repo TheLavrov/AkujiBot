@@ -125,9 +125,13 @@ namespace DiscordBot.Modules
                     dynamic LLBLeaderboard = JsonConvert.DeserializeObject(jsonText);
                     int search = 0;
 
+                    string SummaryURL = $"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={DevSteamID}&steamids={User["response"]["steamid"]}";
+                    SummaryURL = await client.GetStringAsync(SummaryURL);
+                    dynamic Summary = JsonConvert.DeserializeObject(SummaryURL);
+
                     if (LLBLeaderboard["response"]["leaderboardCount"] == 1)                                            //in case a new season happens
                     {
-                        LLBCurrent = LLBLeaderboard["response"]["leaderboard"]["url"] + "&steamid=" + User["response"]["steamid"];
+                        LLBCurrent = LLBLeaderboard["response"]["leaderboard"]["url"] + "&steamid=" + Summary["response"]["players"][0]["steamid"];
                     }
                     else
                     {
@@ -136,7 +140,7 @@ namespace DiscordBot.Modules
                             if (Convert.ToInt32(leaderboard["lbid"]) > search)
                             {
                                 search = Convert.ToInt32(leaderboard["lbid"]);
-                                LLBCurrent = leaderboard["url"] + "&steamid=" + User["response"]["steamid"];
+                                LLBCurrent = leaderboard["url"] + "&steamid=" + Summary["response"]["players"][0]["steamid"];
                             }
                         }
                     }
@@ -147,22 +151,18 @@ namespace DiscordBot.Modules
                     dynamic LLBStats = JsonConvert.DeserializeObject(jsonText);
                     bool found = false;
 
-                    foreach (var entry in LLBStats["response"]["entries"]["entry"])
+                    if (LLBStats["response"]["resultCount"] == 1)
                     {
-                        if (entry["steamid"] == User["response"]["steamid"])
+                        if (LLBStats["response"]["entries"]["entry"]["steamid"] == Summary["response"]["players"][0]["steamid"])
                         {
-                            string SummaryURL = $"http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key={DevSteamID}&steamids={User["response"]["steamid"]}";
-                            SummaryURL = await client.GetStringAsync(SummaryURL);
-                            dynamic Summary = JsonConvert.DeserializeObject(SummaryURL);
-
                             found = true;
                             var embed = new EmbedBuilder()
                                 .WithAuthor($"{Summary["response"]["players"][0]["personaname"]}", $"{Summary["response"]["players"][0]["avatar"]}", $"{Summary["response"]["players"][0]["profileurl"]}")
                                 .WithThumbnailUrl($"{Summary["response"]["players"][0]["avatarfull"]}")
-                                .AddField("Rank", $"{entry["rank"]}")
-                                .AddField("Score", $"{entry["score"]}");
+                                .AddField("Rank", $"{LLBStats["response"]["entries"]["entry"]["rank"]}")
+                                .AddField("Score", $"{LLBStats["response"]["entries"]["entry"]["score"]}");
 
-                            if (entry["rank"] <= 100)
+                            if (LLBStats["response"]["entries"]["entry"]["rank"] <= 100)
                                 embed.WithColor(30, 254, 218);
                             else
                                 embed.WithColor(252, 245, 69);
@@ -170,6 +170,28 @@ namespace DiscordBot.Modules
                             await ReplyAsync("", false, embed.Build());
                         }
                     }
+                    else
+                    {
+                        foreach (var entry in LLBStats["response"]["entries"]["entry"])
+                        {
+                            if (entry["steamid"] == Summary["response"]["players"][0]["steamid"])
+                            {
+                                found = true;
+                                var embed = new EmbedBuilder()
+                                    .WithAuthor($"{Summary["response"]["players"][0]["personaname"]}", $"{Summary["response"]["players"][0]["avatar"]}", $"{Summary["response"]["players"][0]["profileurl"]}")
+                                    .WithThumbnailUrl($"{Summary["response"]["players"][0]["avatarfull"]}")
+                                    .AddField("Rank", $"{entry["rank"]}")
+                                    .AddField("Score", $"{entry["score"]}");
+
+                                if (entry["rank"] <= 100)
+                                    embed.WithColor(30, 254, 218);
+                                else
+                                    embed.WithColor(252, 245, 69);
+
+                                await ReplyAsync("", false, embed.Build());
+                            }
+                        }
+                    }           
 
                     if (!found)
                     {
