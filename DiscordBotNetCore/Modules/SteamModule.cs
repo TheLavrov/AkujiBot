@@ -185,7 +185,7 @@ namespace DiscordBot.Modules
 
                                 if (Convert.ToInt32(entry["rank"]) <= 100)
                                     embed.WithColor(30, 254, 218);
-                                else if (Convert.ToInt32(LLBStats["response"]["entries"]["entry"]["rank"]) <= 1000)
+                                else if (Convert.ToInt32(entry["rank"]) <= 1000)
                                     embed.WithColor(252, 245, 69);
 
                                 await ReplyAsync("", false, embed.Build());
