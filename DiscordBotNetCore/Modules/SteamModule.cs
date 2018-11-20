@@ -162,9 +162,9 @@ namespace DiscordBot.Modules
                                 .AddField("Rank", $"{LLBStats["response"]["entries"]["entry"]["rank"]}")
                                 .AddField("Score", $"{LLBStats["response"]["entries"]["entry"]["score"]}");
 
-                            if (LLBStats["response"]["entries"]["entry"]["rank"] <= 100)
+                            if (Convert.ToInt32(LLBStats["response"]["entries"]["entry"]["rank"]) <= 100)
                                 embed.WithColor(30, 254, 218);
-                            else
+                            else if (Convert.ToInt32(LLBStats["response"]["entries"]["entry"]["rank"]) <= 1000)
                                 embed.WithColor(252, 245, 69);
 
                             await ReplyAsync("", false, embed.Build());
@@ -183,9 +183,9 @@ namespace DiscordBot.Modules
                                     .AddField("Rank", $"{entry["rank"]}")
                                     .AddField("Score", $"{entry["score"]}");
 
-                                if (entry["rank"] <= 100)
+                                if (Convert.ToInt32(entry["rank"]) <= 100)
                                     embed.WithColor(30, 254, 218);
-                                else
+                                else if (Convert.ToInt32(LLBStats["response"]["entries"]["entry"]["rank"]) <= 1000)
                                     embed.WithColor(252, 245, 69);
 
                                 await ReplyAsync("", false, embed.Build());
