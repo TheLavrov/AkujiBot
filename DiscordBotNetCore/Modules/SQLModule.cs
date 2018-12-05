@@ -11,6 +11,27 @@ namespace DiscordBot.Modules
 {
 	public class SQLModule : ModuleBase<SocketCommandContext>
     {
+		/*
+		 * Executes a query for a SQLite connection.
+		 */
+		private static void doQuery(SqliteConnection connection, string query)
+		{
+			var command = connection.CreateCommand();
+			command.CommandText = query;
+			command.ExecuteNonQuery();
+		}
+
+		private static void doPQuery(SqliteConnection connection, string query, params string[] args)
+		{
+			var command = connection.CreateCommand();
+			command.CommandText = query;
+			for(int i = 0; i < args.Length; i++)
+			{
+				command.Parameters.AddWithValue("$" + (i + 1), args[i]);
+			}
+			command.ExecuteNonQuery();
+		}
+
 		[Command("fcadd")]
 		[Remarks("fcadd [switch, 3ds, wiiu] [12 digit code]")]
 		[Summary("Allows you to add a friend code to yourself.")]
@@ -35,16 +56,23 @@ namespace DiscordBot.Modules
 				var m_dbConnection = new SqliteConnection("" + new SqliteConnectionStringBuilder{DataSource = $"{file}"});  // Create connection
 				m_dbConnection.Open();                                                                                                  // Open
 
-				string sql = "CREATE TABLE IF NOT EXISTS friendcode (id ULONG PRIMARY KEY, fcswitch VARCHAR DEFAULT NULL, fc3ds VARCHAR DEFAULT NULL, fcwiiu VARCHAR DEFAULT NULL)";
-				var command = m_dbConnection.CreateCommand();
-				command.CommandText = sql;
-				command.ExecuteNonQuery();
+				// table creation query
+				this.doQuery(m_dbConnection, @"
+					CREATE TABLE IF NOT EXISTS friendcode (
+						id ULONG PRIMARY KEY,
+						fcswitch VARCHAR DEFAULT NULL,
+						fc3ds VARCHAR DEFAULT NULL,
+						fcwiiu VARCHAR DEFAULT NULL,
+						private BOOLEAN DEFAULT TRUE
+					);
+				");
 
-				sql = $"SELECT * FROM friendcode WHERE id={Context.User.Id}";													// run command to find if id is already associated
-				command = m_dbConnection.CreateCommand();
-				command.CommandText = sql;
-				command.ExecuteNonQuery();
-
+				// run command to find if id is already associated
+				this.doQuery(m_dbConnection,
+					"SELECT * FROM friendcode WHERE id=$1;",
+					Context.User.Id
+				);
+				
 				bool exists;
 				using (var reader = command.ExecuteReader())
 				{
@@ -105,14 +133,14 @@ namespace DiscordBot.Modules
 			var m_dbConnection = new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{file}" });  // Create connection
 			m_dbConnection.Open();                                                                                                          // Open
 
-			string sql = "CREATE TABLE IF NOT EXISTS friendcode (id ULONG PRIMARY KEY, fcswitch VARCHAR DEFAULT NULL, fc3ds VARCHAR DEFAULT NULL, fcwiiu VARCHAR DEFAULT NULL)";
+			string query = "CREATE TABLE IF NOT EXISTS friendcode (id ULONG PRIMARY KEY, fcswitch VARCHAR DEFAULT NULL, fc3ds VARCHAR DEFAULT NULL, fcwiiu VARCHAR DEFAULT NULL)";
 			var command = m_dbConnection.CreateCommand();
-			command.CommandText = sql;
+			command.CommandText = query;
 			command.ExecuteNonQuery();
 
-			sql = $"SELECT * FROM friendcode WHERE id={search}";                                                   // run command to find if id is already associated
+			query = $"SELECT * FROM friendcode WHERE id={search}";                                                   // run command to find if id is already associated
 			command = m_dbConnection.CreateCommand();
-			command.CommandText = sql;
+			command.CommandText = query;
 			command.ExecuteNonQuery();
 			bool exists;
 			using (var reader = command.ExecuteReader())
@@ -129,9 +157,9 @@ namespace DiscordBot.Modules
 			
 			if (exists)
 			{
-				sql = $"SELECT * FROM friendcode WHERE id={search}";
+				query = $"SELECT * FROM friendcode WHERE id={search}";
 				command = m_dbConnection.CreateCommand();
-				command.CommandText = sql;
+				command.CommandText = query;
 				using (var rdr = command.ExecuteReader())
 				{
 					while (rdr.Read())
