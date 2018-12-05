@@ -6,10 +6,11 @@ using System.Text.RegularExpressions;
 using System.IO;
 using System.Linq;
 using Microsoft.Data.Sqlite;
+using System.Collections.Generic;
 
 namespace DiscordBot.Modules
 {
-	public class SQLModule : ModuleBase<SocketCommandContext>
+    public class SQLModule : ModuleBase<SocketCommandContext>
     {
 		[Command("fcadd")]
 		[Remarks("fcadd [switch, 3ds, wiiu] [12 digit code]")]
@@ -176,8 +177,65 @@ namespace DiscordBot.Modules
 				m_dbConnection.Close();                                                                                                 // close connection
 				var message = await ReplyAsync($"`Error: No friend code data was found with your selection.`");
 			}
+        }
 
+        [Command("fcdump")]
+        [Remarks("fcdump")]
+        [Summary("(ADMIN ONLY) Dump every saved friend code to DMs.")]
+        public async Task FriendCodeDump()
+        {
+            if (!Config.Load().IsAdmin(Context.User.Id))            //if they arent an admin, turn them down
+            {
+                var message = await ReplyAsync($"`Only admins can use this command.`");
+                await Task.Delay(2000);
+                await message.DeleteAsync();
+                return;
+            }
 
-		}
-	}
+            string FileName = "config/database.sqlite";
+            string file = Path.Combine(AppContext.BaseDirectory, FileName);
+            if (!File.Exists(file))                                                                                                 // Check if the configuration file exists.
+            {
+                string path = Path.GetDirectoryName(file);                                                                          // Create config directory if doesn't exist.
+                if (!Directory.Exists(path))
+                    Directory.CreateDirectory(path);
+            }
+
+            var m_dbConnection = new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{file}" });  // Create connection
+            m_dbConnection.Open();                                                                                                  // Open
+
+            string sql = "CREATE TABLE IF NOT EXISTS friendcode (id ULONG PRIMARY KEY, fcswitch VARCHAR DEFAULT NULL, fc3ds VARCHAR DEFAULT NULL, fcwiiu VARCHAR DEFAULT NULL)";
+            var command = m_dbConnection.CreateCommand();
+            command.CommandText = sql;
+            command.ExecuteNonQuery();
+
+            sql = $"SELECT * FROM friendcode";
+            command = m_dbConnection.CreateCommand();
+            command.CommandText = sql;
+
+            List<string> users = new List<string>();
+            using (var rdr = command.ExecuteReader())
+            {
+                while (rdr.Read())
+                {
+                    string name = rdr["id"].ToString();
+                    foreach (var user in Context.Guild.Users)
+                    {
+                        if (name == user.Id.ToString())
+                        {
+                            name = user.Username;
+                        }
+                    }
+                    users.Add($"\t\t{name}\t\tSwitch: {rdr["fcswitch"].ToString()}\t3DS: {rdr["fc3ds"].ToString()}\tWii U: {rdr["fcwiiu"].ToString()}");
+                }
+                rdr.Close();
+            }
+            m_dbConnection.Close();
+
+            string TextFileName = "config/dump.txt";
+            File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, TextFileName), users.ToArray());
+
+            await Context.User.SendFileAsync(Path.Combine(AppContext.BaseDirectory, TextFileName));
+        }
+    }
 }
