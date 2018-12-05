@@ -12,26 +12,56 @@ namespace DiscordBot.Modules
 {
     public class SQLModule : ModuleBase<SocketCommandContext>
     {
+		private static SqliteConnection SqlConnect()
+		{
+			string filename = Path.Combine(AppContext.BaseDirectory, "config/database.sqlite");
+
+			if (!File.Exists(filename)) // create the directory if it doesn't exist
+			{
+				string dir = Path.GetDirectoryName(filename);
+				if (!Directory.Exists(dir))
+					Directory.CreateDirectory(dir);
+			}
+
+			return new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{ filename }" });
+		}
+
 		/*
 		 * Executes a query for a SQLite connection.
 		 */
-		private static void doQuery(SqliteConnection connection, string query)
+		private static SqliteDataReader SqlQuery(SqliteConnection connection, string query)
 		{
 			var command = connection.CreateCommand();
 			command.CommandText = query;
-			command.ExecuteNonQuery();
+
+			return command.ExecuteReader();
 		}
 
-		private static void doPQuery(SqliteConnection connection, string query, params string[] args)
+		private static SqliteDataReader SqlPQuery(SqliteConnection connection, string query, params object[] args)
 		{
 			var command = connection.CreateCommand();
 			command.CommandText = query;
 			for(int i = 0; i < args.Length; i++)
 			{
-				command.Parameters.AddWithValue("$" + (i + 1), args[i]);
+				command.Parameters.AddWithValue("@" + (i + 1), args[i]);
 			}
-			command.ExecuteNonQuery();
+
+			return command.ExecuteReader();
 		}
+
+		// SQL query for creating the friendcode table
+		private static string QUERY_FC_TABLE = @"
+			CREATE TABLE IF NOT EXISTS friendcode (
+				id ULONG PRIMARY KEY,
+				fcswitch VARCHAR DEFAULT NULL,
+				fc3ds VARCHAR DEFAULT NULL,
+				fcwiiu VARCHAR DEFAULT NULL,
+				hidden BOOLEAN DEFAULT 1
+			);
+		";
+
+		// filename for ~fcdump executions
+		private static string DUMPNAME = Path.Combine(AppContext.BaseDirectory, "config/dump.txt");
 
 		[Command("fcadd")]
 		[Remarks("fcadd [switch, 3ds, wiiu] [12 digit code]")]
@@ -54,49 +84,39 @@ namespace DiscordBot.Modules
 						Directory.CreateDirectory(path);
 				}
 
-				var m_dbConnection = new SqliteConnection("" + new SqliteConnectionStringBuilder{DataSource = $"{file}"});  // Create connection
-				m_dbConnection.Open();                                                                                                  // Open
+				var sqlconn = SQLModule.SqlConnect();
+				sqlconn.Open();
 
 				// table creation query
-				this.doQuery(m_dbConnection, @"
-					CREATE TABLE IF NOT EXISTS friendcode (
-						id ULONG PRIMARY KEY,
-						fcswitch VARCHAR DEFAULT NULL,
-						fc3ds VARCHAR DEFAULT NULL,
-						fcwiiu VARCHAR DEFAULT NULL,
-						private BOOLEAN DEFAULT TRUE
-					);
-				");
+				SQLModule.SqlQuery(sqlconn, QUERY_FC_TABLE);
 
-				// run command to find if id is already associated
-				this.doQuery(m_dbConnection,
-					"SELECT * FROM friendcode WHERE id=$1;",
-					Context.User.Id
-				);
+				var reader = SQLModule.SqlPQuery(sqlconn, "SELECT * FROM friendcode WHERE id=@1;", Context.User.Id);
 				
 				bool exists;
-				using (var reader = command.ExecuteReader())
+				using (reader)
 				{
 					exists = reader.HasRows;
 					reader.Close();
 				}
 
-                command = m_dbConnection.CreateCommand();
-                if (!exists)																											// if not exists, we insert new
+				// executing the query
+				
+				if (!exists) // if not exists, we insert new
 				{
-                    command.CommandText = $"insert into friendcode (fc{choice}, id) values (@fc, @param1)";
-                    command.Parameters.AddWithValue("@fc", fc);
-                    command.Parameters.AddWithValue("@param1", Context.User.Id);
+					SQLModule.SqlPQuery(sqlconn,
+						$"INSERT INTO friendcode (fc{choice}, id) VALUES (@1, @2);",
+						fc, Context.User.Id
+					);
 				}
-				else																													// if exists, we update current
+				else // if exists, we update current
 				{
-                    command.CommandText = $"update friendcode set fc{choice} = @fc where id = @param1";
-                    command.Parameters.AddWithValue("@fc", fc);
-                    command.Parameters.AddWithValue("@param1", Context.User.Id);
-				}			
-				command.ExecuteNonQuery();
-				m_dbConnection.Close();																									// close connection
+					SQLModule.SqlPQuery(sqlconn,
+						$"UPDATE friendcode SET fc{choice} = @1 WHERE id = @2;",
+						fc, Context.User.Id
+					);
+				}
 
+				sqlconn.Close();
 				var message = await ReplyAsync($"`Friend code saved.`");
 			}
 			else
@@ -207,63 +227,119 @@ namespace DiscordBot.Modules
 			}
         }
 
+		[Command("fchide")]
+		[Remarks("fchide")]
+		[Summary("Toggles the visibility of your friend codes.")]
+		public async Task FriendCodeHidden()
+		{
+			var id = Context.User.Id;
+
+			using(var sqlconn = SQLModule.SqlConnect())
+			{
+				sqlconn.Open();
+				using(var response = SQLModule.SqlQuery(sqlconn, "SELECT hidden FROM friendcode;"))
+				{
+					if(response.HasRows)
+					{
+						if(response.GetBoolean(response.GetOrdinal("hidden")))
+						{
+							SQLModule.SqlPQuery(sqlconn, "UPDATE friendcode SET hidden = 0 WHERE id = @1;", id);
+							await ReplyAsync("`Set friend code visibility to PUBLIC`");
+						}
+						else
+						{
+							SQLModule.SqlPQuery(sqlconn, "UPDATE friendcode SET hidden = 1 WHERE id = @1;", id);
+							await ReplyAsync("`Set friend code visibility to PRIVATE`");
+						}
+					}
+				}
+			}
+		}
+
         [Command("fcdump")]
         [Remarks("fcdump")]
-        [Summary("(ADMIN ONLY) Dump every saved friend code to DMs.")]
+        [Summary("DMs a list of saved friend codes to you.")]
         public async Task FriendCodeDump()
         {
-            if (!Config.Load().IsAdmin(Context.User.Id))            //if they arent an admin, turn them down
-            {
-                var message = await ReplyAsync($"`Only admins can use this command.`");
-                await Task.Delay(2000);
-                await message.DeleteAsync();
-                return;
-            }
+			string query;
+			if (Config.Load().IsAdmin(Context.User.Id))
+			{
+				query = "SELECT * FROM friendcode;"; // get all friendcodes (for admins)
+			}
+			else
+			{
+				query = "SELECT * FROM friendcode WHERE hidden = 0;"; // get only public friendcodes
+			}
 
-            string FileName = "config/database.sqlite";
-            string file = Path.Combine(AppContext.BaseDirectory, FileName);
-            if (!File.Exists(file))                                                                                                 // Check if the configuration file exists.
-            {
-                string path = Path.GetDirectoryName(file);                                                                          // Create config directory if doesn't exist.
-                if (!Directory.Exists(path))
-                    Directory.CreateDirectory(path);
-            }
+			// do query
+			
+			using(var sqlconn = SQLModule.SqlConnect())
+			{
+				sqlconn.Open();
 
-            var m_dbConnection = new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{file}" });  // Create connection
-            m_dbConnection.Open();                                                                                                  // Open
+				using (var reader = SQLModule.SqlQuery(sqlconn, query))
+				{
+					List<string> users = new List<string>();
+					while (reader.Read())
+					{
+						string name = reader["id"].ToString();
+						foreach (var user in Context.Guild.Users)
+						{
+							if (name == user.Id.ToString())
+							{
+								name = user.Username;
+							}
+						}
+						users.Add(
+								$"\t\t{name}\t\t" +
+								$"Switch: {reader["fcswitch"].ToString()}\t" +
+								$"3DS: {reader["fc3ds"].ToString()}\t" +
+								$"Wii U: {reader["fcwiiu"].ToString()}"
+								);
+					}
 
-            string sql = "CREATE TABLE IF NOT EXISTS friendcode (id ULONG PRIMARY KEY, fcswitch VARCHAR DEFAULT NULL, fc3ds VARCHAR DEFAULT NULL, fcwiiu VARCHAR DEFAULT NULL)";
-            var command = m_dbConnection.CreateCommand();
-            command.CommandText = sql;
-            command.ExecuteNonQuery();
+					File.WriteAllLines(DUMPNAME, users.ToArray());
 
-            sql = $"SELECT * FROM friendcode";
-            command = m_dbConnection.CreateCommand();
-            command.CommandText = sql;
+					await Context.User.SendFileAsync(DUMPNAME);
+				}
+			}
+		}
 
-            List<string> users = new List<string>();
-            using (var rdr = command.ExecuteReader())
-            {
-                while (rdr.Read())
-                {
-                    string name = rdr["id"].ToString();
-                    foreach (var user in Context.Guild.Users)
-                    {
-                        if (name == user.Id.ToString())
-                        {
-                            name = user.Username;
-                        }
-                    }
-                    users.Add($"\t\t{name}\t\tSwitch: {rdr["fcswitch"].ToString()}\t3DS: {rdr["fc3ds"].ToString()}\tWii U: {rdr["fcwiiu"].ToString()}");
-                }
-                rdr.Close();
-            }
-            m_dbConnection.Close();
+		[Command("fcfixdb")]
+		[Remarks("fcfixdb")]
+		[Summary("A temporary command to fix the database")]
+		public async Task FriendCodeFixDatabase()
+		{
+			if(!Config.Load().IsAdmin(Context.User.Id)) return; // block non-admins
 
-            string TextFileName = "config/dump.txt";
-            File.WriteAllLines(Path.Combine(AppContext.BaseDirectory, TextFileName), users.ToArray());
+			const string query = "PRAGMA table_info(friendcode);";
 
-            await Context.User.SendFileAsync(Path.Combine(AppContext.BaseDirectory, TextFileName));
-        }
-    }
+			using(var sqlconn = SQLModule.SqlConnect())
+			{
+				sqlconn.Open();
+
+				using(var reader = SQLModule.SqlQuery(sqlconn, query))
+				{
+					// check for existence of "hidden" column
+					bool hasHiddenCol = false;
+					while(reader.Read())
+					{
+						if(reader.GetString(reader.GetOrdinal("name")) == "hidden") hasHiddenCol = true;
+					}
+
+					// add "hidden" column if not found
+					if(!hasHiddenCol)
+					{
+						SQLModule.SqlQuery(sqlconn, "ALTER TABLE friendcode ADD COLUMN hidden BOOLEAN DEFAULT 1");
+						await ReplyAsync("`Fixed database!`");
+					}
+					else
+					{
+						await ReplyAsync("`Nothing to fix!`");
+					}
+				}
+			}
+
+		}
+	}
 }
