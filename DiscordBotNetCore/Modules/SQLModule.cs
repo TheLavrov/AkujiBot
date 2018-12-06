@@ -307,7 +307,7 @@ namespace DiscordBot.Modules
                         }
                         if (!String.IsNullOrWhiteSpace(reader["fc3ds"].ToString()))
                         {
-                            string temp3DS = reader["fcswitch"].ToString();
+                            string temp3DS = reader["fc3ds"].ToString();
                             temp3DS = "3DS: " + temp3DS.Substring(0, 4) + "-" + temp3DS.Substring(4, 4) + "-" + temp3DS.Substring(8, 4) + "\r\n";
                             temp += temp3DS;
                         }                            
