@@ -281,7 +281,7 @@ namespace DiscordBot.Modules
                 using (var reader = SQLModule.SqlQuery(sqlconn, query))
 				{
 					List<string> users = new List<string>();
-                    string temp = $"Public Friend Codes from {Context.Channel.Name}:\r\n";
+                    string temp = $"Public Friend Codes from {Context.Guild.Name}:\r\n";
                     users.Add(temp);
                     while (reader.Read())
                     {
