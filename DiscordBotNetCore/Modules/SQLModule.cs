@@ -282,6 +282,7 @@ namespace DiscordBot.Modules
 				{
 					List<string> users = new List<string>();
                     string temp = $"Public Friend Codes from {Context.Channel.Name}:\r\n";
+                    users.Add(temp);
                     while (reader.Read())
                     {
                         string name = reader["id"].ToString();
@@ -297,7 +298,7 @@ namespace DiscordBot.Modules
                             }
                         }
 
-                        temp += $"{name}\r\n";
+                        temp = $"{name}\r\n";
 
                         if (!String.IsNullOrWhiteSpace(reader["fcswitch"].ToString()))
                         {
