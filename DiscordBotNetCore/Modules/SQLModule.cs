@@ -295,15 +295,17 @@ namespace DiscordBot.Modules
 							}
 						}
 
-                        string temp = $"{name}\n";
+                        string temp = $"Public Friend Codes from {Context.Channel.Name}:\r\n";
+                        temp += $"{name}\r\n";
+
                         if (!String.IsNullOrWhiteSpace(reader["fcswitch"].ToString()))
-                            temp += $"Switch: {reader["fcswitch"].ToString()}\n";
+                            temp += $"Switch: {reader["fcswitch"].ToString()}\r\n";
                         if (!String.IsNullOrWhiteSpace(reader["fc3ds"].ToString()))
-                            temp += $"3DS: {reader["fc3ds"].ToString()}\n";
+                            temp += $"3DS: {reader["fc3ds"].ToString()}\r\n";
                         if (!String.IsNullOrWhiteSpace(reader["fcwiiu"].ToString()))
-                            temp += $"Wii U: {reader["fcwiiu"].ToString()}\n";
-                        
-                        temp += '\n';
+                            temp += $"Wii U: {reader["fcwiiu"].ToString()}\r\n";
+
+                        temp += "\r\n";
 
 						users.Add(temp);
 					}
