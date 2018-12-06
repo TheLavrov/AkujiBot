@@ -288,14 +288,24 @@ namespace DiscordBot.Modules
 							if (name == user.Id.ToString())
 							{
 								name = user.Username;
+                                if ( !String.IsNullOrWhiteSpace(user.Nickname) )
+                                {
+                                    name = name + $" ({user.Nickname})";
+                                }
 							}
 						}
-						users.Add(
-								$"\t\t{name}\t\t" +
-								$"Switch: {reader["fcswitch"].ToString()}\t" +
-								$"3DS: {reader["fc3ds"].ToString()}\t" +
-								$"Wii U: {reader["fcwiiu"].ToString()}"
-								);
+
+                        string temp = $"{name}\n";
+                        if (!String.IsNullOrWhiteSpace(reader["fcswitch"].ToString()))
+                            temp += $"Switch: {reader["fcswitch"].ToString()}\n";
+                        if (!String.IsNullOrWhiteSpace(reader["fc3ds"].ToString()))
+                            temp += $"3DS: {reader["fc3ds"].ToString()}\n";
+                        if (!String.IsNullOrWhiteSpace(reader["fcwiiu"].ToString()))
+                            temp += $"Wii U: {reader["fcwiiu"].ToString()}\n";
+                        
+                        temp += '\n';
+
+						users.Add(temp);
 					}
 
 					File.WriteAllLines(DUMPNAME, users.ToArray());
