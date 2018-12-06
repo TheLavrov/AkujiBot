@@ -277,31 +277,40 @@ namespace DiscordBot.Modules
 			{
 				sqlconn.Open();
 
-				using (var reader = SQLModule.SqlQuery(sqlconn, query))
+                
+                using (var reader = SQLModule.SqlQuery(sqlconn, query))
 				{
 					List<string> users = new List<string>();
-					while (reader.Read())
-					{
-						string name = reader["id"].ToString();
-						foreach (var user in Context.Guild.Users)
-						{
-							if (name == user.Id.ToString())
-							{
-								name = user.Username;
-                                if ( !String.IsNullOrWhiteSpace(user.Nickname) )
+                    string temp = $"Public Friend Codes from {Context.Channel.Name}:\r\n";
+                    while (reader.Read())
+                    {
+                        string name = reader["id"].ToString();
+                        foreach (var user in Context.Guild.Users)
+                        {
+                            if (name == user.Id.ToString())
+                            {
+                                name = user.Username;
+                                if (!String.IsNullOrWhiteSpace(user.Nickname))
                                 {
                                     name = name + $" ({user.Nickname})";
                                 }
-							}
-						}
+                            }
+                        }
 
-                        string temp = $"Public Friend Codes from {Context.Channel.Name}:\r\n";
                         temp += $"{name}\r\n";
 
                         if (!String.IsNullOrWhiteSpace(reader["fcswitch"].ToString()))
-                            temp += $"Switch: {reader["fcswitch"].ToString()}\r\n";
+                        {
+                            string tempSwitch = reader["fcswitch"].ToString();
+                            tempSwitch = "Switch: SW-" + tempSwitch.Substring(0, 4) + "-" + tempSwitch.Substring(4, 4) + "-" + tempSwitch.Substring(8, 4) + "\r\n";
+                            temp += tempSwitch;
+                        }
                         if (!String.IsNullOrWhiteSpace(reader["fc3ds"].ToString()))
-                            temp += $"3DS: {reader["fc3ds"].ToString()}\r\n";
+                        {
+                            string temp3DS = reader["fcswitch"].ToString();
+                            temp3DS = "3DS: " + temp3DS.Substring(0, 4) + "-" + temp3DS.Substring(4, 4) + "-" + temp3DS.Substring(8, 4) + "\r\n";
+                            temp += temp3DS;
+                        }                            
                         if (!String.IsNullOrWhiteSpace(reader["fcwiiu"].ToString()))
                             temp += $"Wii U: {reader["fcwiiu"].ToString()}\r\n";
 
