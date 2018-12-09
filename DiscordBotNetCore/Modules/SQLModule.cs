@@ -237,7 +237,7 @@ namespace DiscordBot.Modules
 			using(var sqlconn = SQLModule.SqlConnect())
 			{
 				sqlconn.Open();
-				using(var response = SQLModule.SqlQuery(sqlconn, "SELECT hidden FROM friendcode;"))
+				using(var response = SQLModule.SqlPQuery(sqlconn, "SELECT hidden FROM friendcode WHERE id = @1;", id))
 				{
 					if(response.HasRows)
 					{
