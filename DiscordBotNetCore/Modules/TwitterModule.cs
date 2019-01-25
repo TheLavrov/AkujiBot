@@ -55,7 +55,7 @@ namespace DiscordBot.Modules
 					{
 						embed = new EmbedBuilder();
 						embed.WithAuthor($"{tweet.CreatedBy.Name} (@{tweet.CreatedBy.ScreenName})", tweet.CreatedBy.ProfileImageUrl, tweet.Url);
-						embed.WithDescription(tweet.Text);
+						embed.WithDescription(tweet.FullText);
 						embed.WithColor(0, 172, 237);     //Twitter blue
 
 						if (tweet.Media.Count > 0)
@@ -94,8 +94,7 @@ namespace DiscordBot.Modules
 					await Task.Delay(2000);
 					await msg.DeleteAsync();
 				}
-
-				await Context.Client.SetGameAsync($"{twitterFeeds.Count} user's Twitter feed", null, ActivityType.Listening);
+				
 				while (true)
 				{
 					Thread.Sleep(2000);
@@ -103,7 +102,6 @@ namespace DiscordBot.Modules
 					{
 						stream.StopStream();
 						stream.ClearFollows();
-						await Context.Client.SetGameAsync(null);
 						break;
 					}
 				}
