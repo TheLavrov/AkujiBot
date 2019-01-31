@@ -37,7 +37,9 @@ namespace DiscordBot.Modules
 		public void TweetTask(string text, bool displayMsg = true)
 		{
 			RateLimit.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;                                                   //to avoid ratelimits, let Tweetinvi handle it
-			var embed = new EmbedBuilder();
+            TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
+
+            var embed = new EmbedBuilder();
 
 			if (stream == null)
 				stream = Stream.CreateFilteredStream();                                                                             //create a stream for the live feed
@@ -141,10 +143,9 @@ namespace DiscordBot.Modules
 				return;
 			}
 
-			RateLimit.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;                                                   //to avoid ratelimits, let Tweetinvi handle it
 			Auth.SetUserCredentials(consumerKey, consumerSecret, userAccessToken, userAccessSecret);                               //initialize credentials
 
-			if (!running)
+            if (!running)
 			{
 				var message = await ReplyAsync($"`Live feed will now commence for @{text}. Setting it up now...`");
 				await Task.Delay(2000);
