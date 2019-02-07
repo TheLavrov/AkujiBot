@@ -41,11 +41,12 @@ namespace DiscordBot.Modules
 
             var embed = new EmbedBuilder();
 
-			if (stream == null)
-				stream = Stream.CreateFilteredStream();                                                                             //create a stream for the live feed
+			stream = Stream.CreateFilteredStream();                                                                             //create a stream for the live feed
 
+            stream.ClearFollows();
 			foreach (var feed in twitterFeeds)
 				stream.AddFollow(User.GetUserFromScreenName(feed.twitterUser));												//set the stream to follow said user(s)
+
 
 			stream.MatchingTweetReceived += async (sender, args) =>
 			{
@@ -74,11 +75,11 @@ namespace DiscordBot.Modules
 
 			stream.StreamStopped += (sender, args) =>
 			{
-				if (args.Exception != null)
-				{
-					Console.WriteLine(args.Exception);
-				}
-			};
+                if (args.Exception != null)
+                {
+                    Console.WriteLine(args.Exception);
+                }
+            };
 
 			var MainThread = new Thread(() => stream.StartStreamMatchingAnyConditionAsync());
 			MainThread.Start();
@@ -99,7 +100,6 @@ namespace DiscordBot.Modules
 				
 				while (true)
 				{
-					Thread.Sleep(2000);
 					if (!running)
 					{
 						stream.StopStream();
@@ -108,8 +108,8 @@ namespace DiscordBot.Modules
 					}
 				}
 			});
-			MainThread.Start();
-			MainThread.IsBackground = true;
+            MainThread.IsBackground = true;
+            MainThread.Start();			
 		}
 
 		//~live
