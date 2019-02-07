@@ -8,6 +8,7 @@ using Tweetinvi.Streaming;
 using System.Threading;
 using System.Collections.Generic;
 using Tweetinvi.Models;
+using System.Linq;
 
 namespace DiscordBot.Modules
 {
@@ -44,8 +45,8 @@ namespace DiscordBot.Modules
 			stream = Stream.CreateFilteredStream();                                                                             //create a stream for the live feed
 
             stream.ClearFollows();
-			foreach (var feed in twitterFeeds)
-				stream.AddFollow(User.GetUserFromScreenName(feed.twitterUser));												//set the stream to follow said user(s)
+			foreach (var feed in twitterFeeds.Select(x => x.twitterUser).Distinct())
+				stream.AddFollow(User.GetUserFromScreenName(feed));						                						//set the stream to follow said user(s)
 
 
 			stream.MatchingTweetReceived += async (sender, args) =>
@@ -66,8 +67,6 @@ namespace DiscordBot.Modules
 
 						foreach (var channel in feed.channels)													//post the embedded tweet in every channel
 							await channel.SendMessageAsync("", false, embed.Build());
-
-						break;
 					}
 					
 				}
