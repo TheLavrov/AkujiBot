@@ -75,6 +75,7 @@ namespace DiscordBot.Modules
 
 			stream.StreamStopped += (sender, args) =>
 			{
+                Console.WriteLine(DateTime.Now);
                 if (args.Exception != null)
                 {
                     Console.WriteLine(args.Exception);
