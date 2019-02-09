@@ -9,6 +9,7 @@ using System.Threading;
 using System.Collections.Generic;
 using Tweetinvi.Models;
 using System.Linq;
+using System.Web;
 
 namespace DiscordBot.Modules
 {
@@ -58,8 +59,8 @@ namespace DiscordBot.Modules
 					if (tweet.CreatedBy.ScreenName == feed.twitterUser)											//if the twitter screen name matches a saved screen name...
 					{
 						embed = new EmbedBuilder();
-						embed.WithAuthor($"{tweet.CreatedBy.Name} (@{tweet.CreatedBy.ScreenName})", tweet.CreatedBy.ProfileImageUrl, tweet.Url);
-						embed.WithDescription(tweet.FullText);
+						embed.WithAuthor($"{HttpUtility.HtmlDecode(tweet.CreatedBy.Name)} (@{HttpUtility.HtmlDecode(tweet.CreatedBy.ScreenName)})", tweet.CreatedBy.ProfileImageUrl, tweet.Url);
+						embed.WithDescription(HttpUtility.HtmlDecode(tweet.FullText));
 						embed.WithColor(0, 172, 237);     //Twitter blue
 
 						if (tweet.Media.Count > 0)
