@@ -370,7 +370,281 @@ namespace DiscordBot.Modules
 					}
 				}
 			}
+		}
 
+		/// <summary>
+		/// 	Attempts to find a role in a collection by its ID.
+		/// 	Returns null if no matches are found.
+		/// </summary>
+		///
+		private static IRole FindRoleByID(IReadOnlyCollection<IRole> roles, string roleID) {
+
+			IRole role;
+			ulong id;
+			try {
+
+				id = Convert.ToUInt64(roleID);
+				role = roles.First(r => r.Id == id);
+
+			} catch {
+
+				role = null;
+			}
+
+			return role;
+		}
+
+		/// <summary>
+		/// 	Attempts to find a role in a collection by its name (case-insensitive).
+		/// 	Returns null if no matches are found.
+		/// </summary>
+		///
+		private static IRole FindRoleByName(IReadOnlyCollection<IRole> roles, string roleName) {
+			
+			IRole role;
+			try {
+
+				role = roles.First(r => r.Name.ToLower() == roleName.ToLower());
+
+			} catch {
+
+				role = null;
+			}
+
+			return role;
+		}
+
+		[Command( "addrole" )]
+		[Remarks( "addrole [name|id] <alias>" )]
+		[Summary( "Adds a public role that anyone can join" )]
+		public async Task RoleAdd(string roleSearch, string alias = null) {
+
+			// swallow command if not admin
+			if(!Config.Load().IsAdmin(Context.User.Id)) { return; }
+			
+			bool searchedByID = false;
+
+			// retrieve collection of roles from server
+			IReadOnlyCollection<IRole> roles = Context.Guild.Roles;
+
+			IRole role;
+
+			// attempt to find role by ID
+			role = SQLModule.FindRoleByID(roles, roleSearch);
+
+			if(role == null) {
+				
+				// attempt to find role by name
+				role = SQLModule.FindRoleByName(roles, roleSearch);
+			}
+
+			if(role == null) {
+
+				if(searchedByID) {
+					await ReplyAsync("Couldn't find a role with ID `" + roleSearch + "`!");
+				} else {
+					await ReplyAsync("Couldn't find a role with the name `" + roleSearch + "`!");
+				}
+
+				return;
+			}
+
+			if(alias == null) { alias = role.Name.ToLower(); }
+
+			// sanitize alias
+			alias = Regex.Replace(alias, @"\s", "");
+
+			// begin database queries
+			
+			using( var sql = SQLModule.SqlConnect(RoleLocation) ) {
+				
+				sql.Open();
+				SQLModule.SqlQuery(sql, QUERY_ROLE_TABLE);
+
+				// check if this role already exists
+
+				bool exists;
+				using(var reader = SQLModule.SqlPQuery(sql, @"
+
+					SELECT * FROM roles
+						WHERE serverid = @1
+						AND   rolename = @2;
+
+				", role.Guild.Id, alias)) {
+
+					exists = reader.HasRows;
+				}
+
+				if(exists) {
+
+					// update current entry
+					SQLModule.SqlPQuery(sql, @"
+						
+						UPDATE roles SET roleid = @3
+							WHERE serverid = @1
+							AND   rolename = @2;
+							
+					", role.Guild.Id, alias, role.Id);
+				
+					await ReplyAsync("The public role `" + role.Name + "` has been updated! Join it using `~joinrole " + alias + "`!");
+
+				} else {
+
+					// insert new entry
+					SQLModule.SqlPQuery(sql, @"
+						
+						INSERT INTO roles (serverid, rolename, roleid)
+							VALUES (@1, @2, @3);
+							
+					", role.Guild.Id, alias, role.Id);
+
+					await ReplyAsync("The role `" + role.Name + "` is now public! Join it using `~joinrole " + alias + "`!");
+				}
+			}
+		}
+
+		[ Command( "removerole" ) ]
+		[ Remarks( "removerole [role]" ) ]
+		[ Summary( "Removes a public role" ) ]
+		public async Task RoleRemove(string roleSearch) {
+
+			// swallow command if not admin
+			if(!Config.Load().IsAdmin(Context.User.Id)) { return; }
+			
+			using( var sql = SQLModule.SqlConnect(RoleLocation) ) {
+
+				sql.Open();
+				SQLModule.SqlQuery(sql, QUERY_ROLE_TABLE);
+
+				using(var reader = SQLModule.SqlPQuery(sql, @"
+
+					SELECT * FROM roles
+						WHERE serverid = @1
+						AND   rolename = @2;
+
+				", Context.Guild.Id, roleSearch.ToLower())) {
+
+					if(reader.HasRows) {
+
+						// execute delete query
+						SQLModule.SqlPQuery(sql, @"
+
+							DELETE FROM roles
+								WHERE serverid = @1
+								AND   rolename = @2;
+
+						", Context.Guild.Id, roleSearch.ToLower());
+
+						await ReplyAsync("The public role `" + roleSearch.ToLower() + "` has been deleted!");
+
+					} else {
+
+						await ReplyAsync("Sorry, there's no role by that name!");
+					}
+				}
+			}
+		}
+
+		[ Command( "joinrole" ) ]
+		[ Remarks( "joinrole [role]" ) ]
+		[ Summary( "Joins a public role" ) ]
+		public async Task RoleJoin(string roleSearch) {
+			
+			using( var sql = SQLModule.SqlConnect(RoleLocation) ) {
+
+				sql.Open();
+				SQLModule.SqlQuery(sql, QUERY_ROLE_TABLE);
+
+				using(var reader = SQLModule.SqlPQuery(sql, @"
+
+					SELECT * FROM roles
+						WHERE serverid = @1
+						AND   rolename = @2;
+
+				", Context.Guild.Id, roleSearch.ToLower())) {
+
+					if(reader.HasRows) {
+
+						// find this role
+						IRole role = SQLModule.FindRoleByID(Context.Guild.Roles, reader["roleid"].ToString());
+
+						if(role == null) {
+
+							// a case where an entry exists but the role doesn't.
+							// possibly due to the role being deleted.
+							await ReplyAsync("Sorry, this role doesn't exist anymore. Someone should probably update it!");
+							
+						} else {
+
+							try {
+								
+								// set roles of this user
+								await (Context.User as IGuildUser).AddRoleAsync(role);
+								await ReplyAsync("You joined the role `" + role.Name + "`!");
+
+							} catch { // an exception will occur if the bot doesn't have enough perms
+
+								await ReplyAsync("Sorry, I don't have the permission to change your roles!");
+							}
+						}
+						
+					} else {
+
+						await ReplyAsync("Sorry, there's no role by that name!");
+					}
+				}
+			}
+		}
+
+		[ Command( "leaverole" ) ]
+		[ Remarks( "leaverole [role]" ) ]
+		[ Summary( "Leaves a public role" ) ]
+		public async Task RoleLeave(string roleSearch) {
+			
+			using( var sql = SQLModule.SqlConnect(RoleLocation) ) {
+
+				sql.Open();
+				SQLModule.SqlQuery(sql, QUERY_ROLE_TABLE);
+
+				using(var reader = SQLModule.SqlPQuery(sql, @"
+
+					SELECT * FROM roles
+						WHERE serverid = @1
+						AND   rolename = @2;
+
+				", Context.Guild.Id, roleSearch.ToLower())) {
+
+					if(reader.HasRows) {
+
+						// find this role
+						IRole role = SQLModule.FindRoleByID(Context.Guild.Roles, reader["roleid"].ToString());
+
+						if(role == null) {
+
+							// an edge case if an entry exists but the role doesn't.
+							// possibly due to the role being deleted.
+							await ReplyAsync("Sorry, this role doesn't exist anymore. Someone should probably update it!");
+							
+						} else {
+
+							try {
+								
+								// set roles of this user
+								await (Context.User as IGuildUser).RemoveRoleAsync(role);
+								await ReplyAsync("You left the role `" + role.Name + "`!");
+
+							} catch { // an exception will occur if the bot doesn't have enough perms
+
+								await ReplyAsync("Sorry, I don't have the permission to change your roles!");
+							}
+						}
+						
+					} else {
+
+						await ReplyAsync("Sorry, there's no role by that name!");
+					}
+				}
+			}
 		}
 	}
 }
