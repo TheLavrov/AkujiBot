@@ -12,45 +12,48 @@ namespace DiscordBot.Modules
 {
     public class SQLModule : ModuleBase<SocketCommandContext>
     {
-		private static SqliteConnection SqlConnect()
-		{
-			string filename = Path.Combine(AppContext.BaseDirectory, "config/database.sqlite");
+        string FCLocation = "config/database.sqlite";
+        string RoleLocation = "config/roles.sqlite";
 
-			if (!File.Exists(filename)) // create the directory if it doesn't exist
-			{
-				string dir = Path.GetDirectoryName(filename);
-				if (!Directory.Exists(dir))
-					Directory.CreateDirectory(dir);
-			}
+        private static SqliteConnection SqlConnect(string fileLocation)
+        {
+            string filename = Path.Combine(AppContext.BaseDirectory, fileLocation);
 
-			return new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{ filename }" });
-		}
+            if (!File.Exists(filename)) // create the directory if it doesn't exist
+            {
+                string dir = Path.GetDirectoryName(filename);
+                if (!Directory.Exists(dir))
+                    Directory.CreateDirectory(dir);
+            }
 
-		/*
+            return new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{ filename }" });
+        }
+
+        /*
 		 * Executes a query for a SQLite connection.
 		 */
-		private static SqliteDataReader SqlQuery(SqliteConnection connection, string query)
-		{
-			var command = connection.CreateCommand();
-			command.CommandText = query;
+        private static SqliteDataReader SqlQuery(SqliteConnection connection, string query)
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = query;
 
-			return command.ExecuteReader();
-		}
+            return command.ExecuteReader();
+        }
 
-		private static SqliteDataReader SqlPQuery(SqliteConnection connection, string query, params object[] args)
-		{
-			var command = connection.CreateCommand();
-			command.CommandText = query;
-			for(int i = 0; i < args.Length; i++)
-			{
-				command.Parameters.AddWithValue("@" + (i + 1), args[i]);
-			}
+        private static SqliteDataReader SqlPQuery(SqliteConnection connection, string query, params object[] args)
+        {
+            var command = connection.CreateCommand();
+            command.CommandText = query;
+            for (int i = 0; i < args.Length; i++)
+            {
+                command.Parameters.AddWithValue("@" + (i + 1), args[i]);
+            }
 
-			return command.ExecuteReader();
-		}
+            return command.ExecuteReader();
+        }
 
-		// SQL query for creating the friendcode table
-		private static string QUERY_FC_TABLE = @"
+        // SQL query for creating the friendcode table
+        private static string QUERY_FC_TABLE = @"
 			CREATE TABLE IF NOT EXISTS friendcode (
 				id ULONG PRIMARY KEY,
 				fcswitch VARCHAR DEFAULT NULL,
@@ -60,23 +63,31 @@ namespace DiscordBot.Modules
 			);
 		";
 
-		// filename for ~fcdump executions
-		private static string DUMPNAME = Path.Combine(AppContext.BaseDirectory, "config/dump.txt");
+        // SQL query for creating the role table
+        private static string QUERY_ROLE_TABLE = @"
+			CREATE TABLE IF NOT EXISTS roles (
+				serverid ULONG PRIMARY KEY,
+				rolename VARCHAR DEFAULT NULL,
+				roleid ULONG DEFAULT NULL
+			);
+		";
+
+        // filename for ~fcdump executions
+        private static string DUMPNAME = Path.Combine(AppContext.BaseDirectory, "config/dump.txt");
 
 		[Command("fcadd")]
 		[Remarks("fcadd [switch, 3ds, wiiu] [12 digit code]")]
 		[Summary("Allows you to add a friend code to yourself.")]
 		public async Task FriendCodeAdd(string choice, [Remainder] string fc)
 		{
-			string FileName = "config/database.sqlite";
-			choice = choice.ToLower();
+    		choice = choice.ToLower();
 			
 			if(choice == "switch" || choice == "3ds")
 				fc = Regex.Replace(fc, "[^0-9]", "");
 			
 			if (((choice == "switch" || choice == "3ds") && fc.Length == 12) || choice == "wiiu")
 			{
-                string file = Path.Combine(AppContext.BaseDirectory, FileName);
+                string file = Path.Combine(AppContext.BaseDirectory, FCLocation);
 				if (!File.Exists(file))                                                                                                 // Check if the configuration file exists.
 				{
 					string path = Path.GetDirectoryName(file);                                                                          // Create config directory if doesn't exist.
@@ -84,7 +95,7 @@ namespace DiscordBot.Modules
 						Directory.CreateDirectory(path);
 				}
 
-				var sqlconn = SQLModule.SqlConnect();
+				var sqlconn = SQLModule.SqlConnect(FCLocation);
 				sqlconn.Open();
 
 				// table creation query
@@ -130,7 +141,6 @@ namespace DiscordBot.Modules
 		[Summary("Allows you to view your saved friend codes, or someone's on the server with a mention if they've added one.")]
 		public async Task FriendCode(string text = " ")
 		{
-			string FileName = "config/database.sqlite";
 			bool success = false;
 			ulong search = Context.User.Id;
 			string name = Context.User.Username;
@@ -143,7 +153,7 @@ namespace DiscordBot.Modules
 				avatarurl = Context.Message.MentionedUsers.ElementAt(0).GetAvatarUrl();
 			}
 
-			string file = Path.Combine(AppContext.BaseDirectory, FileName);
+			string file = Path.Combine(AppContext.BaseDirectory, FCLocation);
 			if (!File.Exists(file))																											// Check if the configuration file exists.
 			{
 				string path = Path.GetDirectoryName(file);																					// Create config directory if doesn't exist.
@@ -234,7 +244,7 @@ namespace DiscordBot.Modules
 		{
 			var id = Context.User.Id;
 
-			using(var sqlconn = SQLModule.SqlConnect())
+			using(var sqlconn = SQLModule.SqlConnect(FCLocation))
 			{
 				sqlconn.Open();
 				using(var response = SQLModule.SqlPQuery(sqlconn, "SELECT hidden FROM friendcode WHERE id = @1;", id))
@@ -273,7 +283,7 @@ namespace DiscordBot.Modules
 
 			// do query
 			
-			using(var sqlconn = SQLModule.SqlConnect())
+			using(var sqlconn = SQLModule.SqlConnect(FCLocation))
 			{
 				sqlconn.Open();
 
@@ -336,7 +346,7 @@ namespace DiscordBot.Modules
 
 			const string query = "PRAGMA table_info(friendcode);";
 
-			using(var sqlconn = SQLModule.SqlConnect())
+			using(var sqlconn = SQLModule.SqlConnect(FCLocation))
 			{
 				sqlconn.Open();
 
