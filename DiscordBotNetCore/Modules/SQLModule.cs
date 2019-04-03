@@ -66,7 +66,8 @@ namespace DiscordBot.Modules
 		// SQL query for creating the role table
 		private static string QUERY_ROLE_TABLE = @"
 			CREATE TABLE IF NOT EXISTS roles (
-				serverid ULONG PRIMARY KEY,
+				id ULONG PRIMARY KEY,
+				serverid ULONG DEFAULT NULL,
 				rolename VARCHAR DEFAULT NULL,
 				roleid ULONG DEFAULT NULL
 			);
