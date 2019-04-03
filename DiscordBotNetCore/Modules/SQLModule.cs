@@ -559,7 +559,7 @@ namespace DiscordBot.Modules
 		[ Command( "rolejoin" ) ]
 		[ Remarks( "rolejoin [role]" ) ]
 		[ Summary( "Joins a public role. Leaving the role parameter blank shows the available public roles for the server." ) ]
-		public async Task RoleJoin([Remainder] string roleSearch) {
+		public async Task RoleJoin(string roleSearch = " ") {
 
             if (String.IsNullOrWhiteSpace(roleSearch))
             {
