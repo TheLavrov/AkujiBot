@@ -8,6 +8,8 @@ using Tweetinvi.Streaming;
 using System.Threading;
 using System.Collections.Generic;
 using Tweetinvi.Models;
+using System.Linq;
+using System.Web;
 
 namespace DiscordBot.Modules
 {
@@ -37,13 +39,16 @@ namespace DiscordBot.Modules
 		public void TweetTask(string text, bool displayMsg = true)
 		{
 			RateLimit.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;                                                   //to avoid ratelimits, let Tweetinvi handle it
-			var embed = new EmbedBuilder();
+            TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
 
-			if (stream == null)
-				stream = Stream.CreateFilteredStream();                                                                             //create a stream for the live feed
+            var embed = new EmbedBuilder();
 
-			foreach (var feed in twitterFeeds)
-				stream.AddFollow(User.GetUserFromScreenName(feed.twitterUser));												//set the stream to follow said user(s)
+			stream = Stream.CreateFilteredStream();                                                                             //create a stream for the live feed
+
+            stream.ClearFollows();
+			foreach (var feed in twitterFeeds.Select(x => x.twitterUser).Distinct())
+				stream.AddFollow(User.GetUserFromScreenName(feed));						                						//set the stream to follow said user(s)
+
 
 			stream.MatchingTweetReceived += async (sender, args) =>
 			{
@@ -54,8 +59,8 @@ namespace DiscordBot.Modules
 					if (tweet.CreatedBy.ScreenName == feed.twitterUser)											//if the twitter screen name matches a saved screen name...
 					{
 						embed = new EmbedBuilder();
-						embed.WithAuthor($"{tweet.CreatedBy.Name} (@{tweet.CreatedBy.ScreenName})", tweet.CreatedBy.ProfileImageUrl, tweet.Url);
-						embed.WithDescription(tweet.Text);
+						embed.WithAuthor($"{HttpUtility.HtmlDecode(tweet.CreatedBy.Name)} (@{HttpUtility.HtmlDecode(tweet.CreatedBy.ScreenName)})", tweet.CreatedBy.ProfileImageUrl, tweet.Url);
+						embed.WithDescription(HttpUtility.HtmlDecode(tweet.FullText));
 						embed.WithColor(0, 172, 237);     //Twitter blue
 
 						if (tweet.Media.Count > 0)
@@ -63,8 +68,6 @@ namespace DiscordBot.Modules
 
 						foreach (var channel in feed.channels)													//post the embedded tweet in every channel
 							await channel.SendMessageAsync("", false, embed.Build());
-
-						break;
 					}
 					
 				}
@@ -72,11 +75,12 @@ namespace DiscordBot.Modules
 
 			stream.StreamStopped += (sender, args) =>
 			{
-				if (args.Exception != null)
-				{
-					Console.WriteLine(args.Exception);
-				}
-			};
+                Console.WriteLine(DateTime.Now);
+                if (args.Exception != null)
+                {
+                    Console.WriteLine(args.Exception);
+                }
+            };
 
 			var MainThread = new Thread(() => stream.StartStreamMatchingAnyConditionAsync());
 			MainThread.Start();
@@ -94,22 +98,19 @@ namespace DiscordBot.Modules
 					await Task.Delay(2000);
 					await msg.DeleteAsync();
 				}
-
-				await Context.Client.SetGameAsync($"{twitterFeeds.Count} user's Twitter feed", null, ActivityType.Listening);
+				
 				while (true)
 				{
-					Thread.Sleep(2000);
 					if (!running)
 					{
 						stream.StopStream();
 						stream.ClearFollows();
-						await Context.Client.SetGameAsync(null);
 						break;
 					}
 				}
 			});
-			MainThread.Start();
-			MainThread.IsBackground = true;
+            MainThread.IsBackground = true;
+            MainThread.Start();			
 		}
 
 		//~live
@@ -143,10 +144,9 @@ namespace DiscordBot.Modules
 				return;
 			}
 
-			RateLimit.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;                                                   //to avoid ratelimits, let Tweetinvi handle it
 			Auth.SetUserCredentials(consumerKey, consumerSecret, userAccessToken, userAccessSecret);                               //initialize credentials
 
-			if (!running)
+            if (!running)
 			{
 				var message = await ReplyAsync($"`Live feed will now commence for @{text}. Setting it up now...`");
 				await Task.Delay(2000);
