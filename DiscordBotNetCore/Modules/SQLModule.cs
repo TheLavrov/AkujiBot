@@ -559,7 +559,7 @@ namespace DiscordBot.Modules
 		[ Command( "rolejoin" ) ]
 		[ Remarks( "rolejoin [role]" ) ]
 		[ Summary( "Joins a public role. Leaving the role parameter blank shows the available public roles for the server." ) ]
-		public async Task RoleJoin(string roleSearch = " ") {
+		public async Task RoleJoin([Remainder] string roleSearch) {
 
             if (String.IsNullOrWhiteSpace(roleSearch))
             {
@@ -604,7 +604,7 @@ namespace DiscordBot.Modules
 						WHERE serverid = @1
 						AND   rolename = @2;
 
-				", Context.Guild.Id, roleSearch.ToLower())) {
+				", Context.Guild.Id, roleSearch)) {
 
 					if(reader.HasRows) {
 
@@ -631,7 +631,8 @@ namespace DiscordBot.Modules
 							}
 						}
 						
-					} else {
+					}
+                    else {
 
 						await ReplyAsync("Sorry, there's no role by that name!");
 					}
