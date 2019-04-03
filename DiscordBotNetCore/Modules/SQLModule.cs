@@ -415,8 +415,8 @@ namespace DiscordBot.Modules
 			return role;
 		}
 
-		[Command( "addrole" )]
-		[Remarks( "addrole [name|id] <alias>" )]
+		[Command( "roleadd" )]
+		[Remarks( "roleadd [name|id] <alias>" )]
 		[Summary( "Adds a public role that anyone can join" )]
 		public async Task RoleAdd(string roleSearch, string alias = null) {
 
@@ -487,7 +487,7 @@ namespace DiscordBot.Modules
 							
 					", role.Guild.Id, alias, role.Id);
 				
-					await ReplyAsync("The public role `" + role.Name + "` has been updated! Join it using `~joinrole " + alias + "`!");
+					await ReplyAsync("The public role `" + role.Name + "` has been updated! Join it using `~rolejoin " + alias + "`!");
 
 				} else {
 
@@ -499,13 +499,13 @@ namespace DiscordBot.Modules
 							
 					", role.Guild.Id, alias, role.Id);
 
-					await ReplyAsync("The role `" + role.Name + "` is now public! Join it using `~joinrole " + alias + "`!");
+					await ReplyAsync("The role `" + role.Name + "` is now public! Join it using `~rolejoin " + alias + "`!");
 				}
 			}
 		}
 
-		[ Command( "removerole" ) ]
-		[ Remarks( "removerole [role]" ) ]
+		[ Command( "roleremove" ) ]
+		[ Remarks( "roleremove [role]" ) ]
 		[ Summary( "Removes a public role" ) ]
 		public async Task RoleRemove(string roleSearch) {
 
@@ -546,8 +546,8 @@ namespace DiscordBot.Modules
 			}
 		}
 
-		[ Command( "joinrole" ) ]
-		[ Remarks( "joinrole [role]" ) ]
+		[ Command( "rolejoin" ) ]
+		[ Remarks( "rolejoin [role]" ) ]
 		[ Summary( "Joins a public role" ) ]
 		public async Task RoleJoin(string roleSearch) {
 			
@@ -597,8 +597,8 @@ namespace DiscordBot.Modules
 			}
 		}
 
-		[ Command( "leaverole" ) ]
-		[ Remarks( "leaverole [role]" ) ]
+		[ Command( "roleleave" ) ]
+		[ Remarks( "roleleave [role]" ) ]
 		[ Summary( "Leaves a public role" ) ]
 		public async Task RoleLeave(string roleSearch) {
 			
