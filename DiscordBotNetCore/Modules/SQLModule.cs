@@ -10,50 +10,50 @@ using System.Collections.Generic;
 
 namespace DiscordBot.Modules
 {
-    public class SQLModule : ModuleBase<SocketCommandContext>
-    {
-        string FCLocation = "config/database.sqlite";
-        string RoleLocation = "config/roles.sqlite";
+	public class SQLModule : ModuleBase<SocketCommandContext>
+	{
+		string FCLocation = "config/database.sqlite";
+		string RoleLocation = "config/roles.sqlite";
 
-        private static SqliteConnection SqlConnect(string fileLocation)
-        {
-            string filename = Path.Combine(AppContext.BaseDirectory, fileLocation);
+		private static SqliteConnection SqlConnect(string fileLocation)
+		{
+			string filename = Path.Combine(AppContext.BaseDirectory, fileLocation);
 
-            if (!File.Exists(filename)) // create the directory if it doesn't exist
-            {
-                string dir = Path.GetDirectoryName(filename);
-                if (!Directory.Exists(dir))
-                    Directory.CreateDirectory(dir);
-            }
+			if (!File.Exists(filename)) // create the directory if it doesn't exist
+			{
+				string dir = Path.GetDirectoryName(filename);
+				if (!Directory.Exists(dir))
+					Directory.CreateDirectory(dir);
+			}
 
-            return new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{ filename }" });
-        }
+			return new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{ filename }" });
+		}
 
-        /*
+		/*
 		 * Executes a query for a SQLite connection.
 		 */
-        private static SqliteDataReader SqlQuery(SqliteConnection connection, string query)
-        {
-            var command = connection.CreateCommand();
-            command.CommandText = query;
+		private static SqliteDataReader SqlQuery(SqliteConnection connection, string query)
+		{
+			var command = connection.CreateCommand();
+			command.CommandText = query;
 
-            return command.ExecuteReader();
-        }
+			return command.ExecuteReader();
+		}
 
-        private static SqliteDataReader SqlPQuery(SqliteConnection connection, string query, params object[] args)
-        {
-            var command = connection.CreateCommand();
-            command.CommandText = query;
-            for (int i = 0; i < args.Length; i++)
-            {
-                command.Parameters.AddWithValue("@" + (i + 1), args[i]);
-            }
+		private static SqliteDataReader SqlPQuery(SqliteConnection connection, string query, params object[] args)
+		{
+			var command = connection.CreateCommand();
+			command.CommandText = query;
+			for (int i = 0; i < args.Length; i++)
+			{
+				command.Parameters.AddWithValue("@" + (i + 1), args[i]);
+			}
 
-            return command.ExecuteReader();
-        }
+			return command.ExecuteReader();
+		}
 
-        // SQL query for creating the friendcode table
-        private static string QUERY_FC_TABLE = @"
+		// SQL query for creating the friendcode table
+		private static string QUERY_FC_TABLE = @"
 			CREATE TABLE IF NOT EXISTS friendcode (
 				id ULONG PRIMARY KEY,
 				fcswitch VARCHAR DEFAULT NULL,
@@ -63,8 +63,8 @@ namespace DiscordBot.Modules
 			);
 		";
 
-        // SQL query for creating the role table
-        private static string QUERY_ROLE_TABLE = @"
+		// SQL query for creating the role table
+		private static string QUERY_ROLE_TABLE = @"
 			CREATE TABLE IF NOT EXISTS roles (
 				serverid ULONG PRIMARY KEY,
 				rolename VARCHAR DEFAULT NULL,
@@ -72,25 +72,25 @@ namespace DiscordBot.Modules
 			);
 		";
 
-        // filename for ~fcdump executions
-        private static string DUMPNAME = Path.Combine(AppContext.BaseDirectory, "config/dump.txt");
+		// filename for ~fcdump executions
+		private static string DUMPNAME = Path.Combine(AppContext.BaseDirectory, "config/dump.txt");
 
 		[Command("fcadd")]
 		[Remarks("fcadd [switch, 3ds, wiiu] [12 digit code]")]
 		[Summary("Allows you to add a friend code to yourself.")]
 		public async Task FriendCodeAdd(string choice, [Remainder] string fc)
 		{
-    		choice = choice.ToLower();
+			choice = choice.ToLower();
 			
 			if(choice == "switch" || choice == "3ds")
 				fc = Regex.Replace(fc, "[^0-9]", "");
 			
 			if (((choice == "switch" || choice == "3ds") && fc.Length == 12) || choice == "wiiu")
 			{
-                string file = Path.Combine(AppContext.BaseDirectory, FCLocation);
-				if (!File.Exists(file))                                                                                                 // Check if the configuration file exists.
+				string file = Path.Combine(AppContext.BaseDirectory, FCLocation);
+				if (!File.Exists(file))																									// Check if the configuration file exists.
 				{
-					string path = Path.GetDirectoryName(file);                                                                          // Create config directory if doesn't exist.
+					string path = Path.GetDirectoryName(file);																			// Create config directory if doesn't exist.
 					if (!Directory.Exists(path))
 						Directory.CreateDirectory(path);
 				}
@@ -162,14 +162,14 @@ namespace DiscordBot.Modules
 			}
 
 			var m_dbConnection = new SqliteConnection("" + new SqliteConnectionStringBuilder { DataSource = $"{file}" });  // Create connection
-			m_dbConnection.Open();                                                                                                          // Open
+			m_dbConnection.Open();																											// Open
 
 			string query = "CREATE TABLE IF NOT EXISTS friendcode (id ULONG PRIMARY KEY, fcswitch VARCHAR DEFAULT NULL, fc3ds VARCHAR DEFAULT NULL, fcwiiu VARCHAR DEFAULT NULL)";
 			var command = m_dbConnection.CreateCommand();
 			command.CommandText = query;
 			command.ExecuteNonQuery();
 
-			query = $"SELECT * FROM friendcode WHERE id={search}";                                                   // run command to find if id is already associated
+			query = $"SELECT * FROM friendcode WHERE id={search}";													 // run command to find if id is already associated
 			command = m_dbConnection.CreateCommand();
 			command.CommandText = query;
 			command.ExecuteNonQuery();
@@ -219,7 +219,7 @@ namespace DiscordBot.Modules
 					rdr.Close();
 				}
 				
-				m_dbConnection.Close();                                                                                                 // close connection
+				m_dbConnection.Close();																									// close connection
 
 				if (success)
 				{
@@ -232,10 +232,10 @@ namespace DiscordBot.Modules
 			}
 			else
 			{
-				m_dbConnection.Close();                                                                                                 // close connection
+				m_dbConnection.Close();																									// close connection
 				var message = await ReplyAsync($"`Error: No friend code data was found with your selection.`");
 			}
-        }
+		}
 
 		[Command("fchide")]
 		[Remarks("fchide")]
@@ -266,11 +266,11 @@ namespace DiscordBot.Modules
 			}
 		}
 
-        [Command("fcdump")]
-        [Remarks("fcdump")]
-        [Summary("DMs a list of saved friend codes to you.")]
-        public async Task FriendCodeDump()
-        {
+		[Command("fcdump")]
+		[Remarks("fcdump")]
+		[Summary("DMs a list of saved friend codes to you.")]
+		public async Task FriendCodeDump()
+		{
 			string query;
 			if (Config.Load().IsAdmin(Context.User.Id))
 			{
@@ -287,45 +287,44 @@ namespace DiscordBot.Modules
 			{
 				sqlconn.Open();
 
-                
-                using (var reader = SQLModule.SqlQuery(sqlconn, query))
+				using (var reader = SQLModule.SqlQuery(sqlconn, query))
 				{
 					List<string> users = new List<string>();
-                    string temp = $"Public Friend Codes from {Context.Guild.Name}:\r\n";
-                    users.Add(temp);
-                    while (reader.Read())
-                    {
-                        string name = reader["id"].ToString();
-                        foreach (var user in Context.Guild.Users)
-                        {
-                            if (name == user.Id.ToString())
-                            {
-                                name = user.Username;
-                                if (!String.IsNullOrWhiteSpace(user.Nickname))
-                                {
-                                    name = name + $" ({user.Nickname})";
-                                }
-                            }
-                        }
+					string temp = $"Public Friend Codes from {Context.Guild.Name}:\r\n";
+					users.Add(temp);
+					while (reader.Read())
+					{
+						string name = reader["id"].ToString();
+						foreach (var user in Context.Guild.Users)
+						{
+							if (name == user.Id.ToString())
+							{
+								name = user.Username;
+								if (!String.IsNullOrWhiteSpace(user.Nickname))
+								{
+									name = name + $" ({user.Nickname})";
+								}
+							}
+						}
 
-                        temp = $"{name}\r\n";
+						temp = $"{name}\r\n";
 
-                        if (!String.IsNullOrWhiteSpace(reader["fcswitch"].ToString()))
-                        {
-                            string tempSwitch = reader["fcswitch"].ToString();
-                            tempSwitch = "Switch: SW-" + tempSwitch.Substring(0, 4) + "-" + tempSwitch.Substring(4, 4) + "-" + tempSwitch.Substring(8, 4) + "\r\n";
-                            temp += tempSwitch;
-                        }
-                        if (!String.IsNullOrWhiteSpace(reader["fc3ds"].ToString()))
-                        {
-                            string temp3DS = reader["fc3ds"].ToString();
-                            temp3DS = "3DS: " + temp3DS.Substring(0, 4) + "-" + temp3DS.Substring(4, 4) + "-" + temp3DS.Substring(8, 4) + "\r\n";
-                            temp += temp3DS;
-                        }                            
-                        if (!String.IsNullOrWhiteSpace(reader["fcwiiu"].ToString()))
-                            temp += $"Wii U: {reader["fcwiiu"].ToString()}\r\n";
+						if (!String.IsNullOrWhiteSpace(reader["fcswitch"].ToString()))
+						{
+							string tempSwitch = reader["fcswitch"].ToString();
+							tempSwitch = "Switch: SW-" + tempSwitch.Substring(0, 4) + "-" + tempSwitch.Substring(4, 4) + "-" + tempSwitch.Substring(8, 4) + "\r\n";
+							temp += tempSwitch;
+						}
+						if (!String.IsNullOrWhiteSpace(reader["fc3ds"].ToString()))
+						{
+							string temp3DS = reader["fc3ds"].ToString();
+							temp3DS = "3DS: " + temp3DS.Substring(0, 4) + "-" + temp3DS.Substring(4, 4) + "-" + temp3DS.Substring(8, 4) + "\r\n";
+							temp += temp3DS;
+						}							 
+						if (!String.IsNullOrWhiteSpace(reader["fcwiiu"].ToString()))
+							temp += $"Wii U: {reader["fcwiiu"].ToString()}\r\n";
 
-                        temp += "\r\n";
+						temp += "\r\n";
 
 						users.Add(temp);
 					}
