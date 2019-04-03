@@ -339,7 +339,7 @@ namespace DiscordBot.Modules
 
 		[Command("fcfixdb")]
 		[Remarks("fcfixdb")]
-		[Summary("A temporary command to fix the database")]
+		[Summary("A temporary command to fix the database.")]
 		public async Task FriendCodeFixDatabase()
 		{
 			if(!Config.Load().IsAdmin(Context.User.Id)) return; // block non-admins
@@ -417,13 +417,18 @@ namespace DiscordBot.Modules
 
 		[Command( "roleadd" )]
 		[Remarks( "roleadd [name|id] <alias>" )]
-		[Summary( "Adds a public role that anyone can join" )]
+		[Summary( "(ADMIN ONLY) Adds a public role that anyone can join." )]
 		public async Task RoleAdd(string roleSearch, string alias = null) {
 
-			// swallow command if not admin
-			if(!Config.Load().IsAdmin(Context.User.Id)) { return; }
-			
-			bool searchedByID = false;
+            if (!Config.Load().IsAdmin(Context.User.Id))            //if they arent an admin, turn them down
+            {
+                var message = await ReplyAsync($"`Only admins can use this command.`");
+                await Task.Delay(2000);
+                await message.DeleteAsync();
+                return;
+            }
+
+            bool searchedByID = false;
 
 			// retrieve collection of roles from server
 			IReadOnlyCollection<IRole> roles = Context.Guild.Roles;
@@ -506,13 +511,18 @@ namespace DiscordBot.Modules
 
 		[ Command( "roleremove" ) ]
 		[ Remarks( "roleremove [role]" ) ]
-		[ Summary( "Removes a public role" ) ]
+		[ Summary( "(ADMIN ONLY) Removes a public role." ) ]
 		public async Task RoleRemove(string roleSearch) {
 
-			// swallow command if not admin
-			if(!Config.Load().IsAdmin(Context.User.Id)) { return; }
-			
-			using( var sql = SQLModule.SqlConnect(RoleLocation) ) {
+            if (!Config.Load().IsAdmin(Context.User.Id))            //if they arent an admin, turn them down
+            {
+                var message = await ReplyAsync($"`Only admins can use this command.`");
+                await Task.Delay(2000);
+                await message.DeleteAsync();
+                return;
+            }
+
+            using ( var sql = SQLModule.SqlConnect(RoleLocation) ) {
 
 				sql.Open();
 				SQLModule.SqlQuery(sql, QUERY_ROLE_TABLE);
@@ -548,10 +558,42 @@ namespace DiscordBot.Modules
 
 		[ Command( "rolejoin" ) ]
 		[ Remarks( "rolejoin [role]" ) ]
-		[ Summary( "Joins a public role" ) ]
-		public async Task RoleJoin(string roleSearch) {
-			
-			using( var sql = SQLModule.SqlConnect(RoleLocation) ) {
+		[ Summary( "Joins a public role. Leaving the role parameter blank shows the available public roles for the server." ) ]
+		public async Task RoleJoin(string roleSearch = " ") {
+
+            if (String.IsNullOrWhiteSpace(roleSearch))
+            {
+                using (var sql = SQLModule.SqlConnect(RoleLocation))
+                {
+                    sql.Open();
+                    SQLModule.SqlQuery(sql, QUERY_ROLE_TABLE);
+                    using (var reader = SQLModule.SqlPQuery(sql, @"
+
+					    SELECT * FROM roles
+					    	WHERE serverid = @1;
+
+				    ", Context.Guild.Id))
+                    {
+                        string summary = "";
+                        if (reader.HasRows)
+                        {
+                            while (reader.Read())
+                            {
+                                summary += $"`{reader["rolename"].ToString()}` ";
+                            }
+                            await ReplyAsync($"These are the roles you can join: \n{summary}");
+                            return;
+                        }
+                        else
+                        {
+                            await ReplyAsync($"There are no public roles on this server yet.");
+                            return;
+                        }
+                    }
+                }
+            }
+
+            using ( var sql = SQLModule.SqlConnect(RoleLocation) ) {
 
 				sql.Open();
 				SQLModule.SqlQuery(sql, QUERY_ROLE_TABLE);
@@ -599,7 +641,7 @@ namespace DiscordBot.Modules
 
 		[ Command( "roleleave" ) ]
 		[ Remarks( "roleleave [role]" ) ]
-		[ Summary( "Leaves a public role" ) ]
+		[ Summary( "Leaves a public role." ) ]
 		public async Task RoleLeave(string roleSearch) {
 			
 			using( var sql = SQLModule.SqlConnect(RoleLocation) ) {
