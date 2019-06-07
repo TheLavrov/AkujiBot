@@ -3,6 +3,9 @@ using Discord.Commands;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
+using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -127,6 +130,34 @@ namespace DiscordBot.Modules
 				await message.DeleteAsync();
 				return;
 			}
+
+            if (Context.Message.Attachments.Count > 0)                      //sets avatar if image is attached
+            {
+                bool IsImageUrl(string URL)
+                {
+                    var req = (HttpWebRequest)HttpWebRequest.Create(URL);
+                    req.Method = "HEAD";
+                    using (var resp = req.GetResponse())
+                    {
+                        return resp.ContentType.ToLower(CultureInfo.InvariantCulture)
+                                   .StartsWith("image/");
+                    }
+                }
+
+                if (IsImageUrl(Context.Message.Attachments.FirstOrDefault().Url))
+                {
+                    using (WebClient webClient = new WebClient())
+                    {
+                        using (Stream stream = webClient.OpenRead(Context.Message.Attachments.FirstOrDefault().Url))
+                        {
+                            await Context.Client.CurrentUser.ModifyAsync(x =>
+                            {
+                                x.Avatar = new Image(stream);
+                            });
+                        }
+                    }
+                }                
+            }
 
 			if (String.IsNullOrWhiteSpace(name))					//remove countdowns of a specific channel
 			{
