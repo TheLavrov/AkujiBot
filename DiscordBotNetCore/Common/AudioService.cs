@@ -1,9 +1,12 @@
-﻿using System.Collections.Concurrent;
+﻿using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using Discord;
 using Discord.Audio;
+using DiscordBot;
 
 public class AudioService
 {
@@ -43,33 +46,55 @@ public class AudioService
 
     public async Task SendAudioAsync(IGuild guild, IMessageChannel channel, string path)
     {
-        // Your task: Get a full path to the file if the value of 'path' is only a filename.
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        {
+            path = AppContext.BaseDirectory + "Music/" + path;
+        }
+        else
+        {
+            path = AppContext.BaseDirectory + "\\Music\\" + path;
+        }
+
         if (!File.Exists(path))
         {
-            await channel.SendMessageAsync("File does not exist.");
+            await channel.SendMessageAsync("`The file does not exist.`");
             return;
         }
         IAudioClient client;
         if (ConnectedChannels.TryGetValue(guild.Id, out client))
         {
             //await Log(LogSeverity.Debug, $"Starting playback of {path} in {guild.Name}");
-            using (var ffmpeg = CreateProcess(path))
+            using (var output = CreateStream(path).StandardOutput.BaseStream)
             using (var stream = client.CreatePCMStream(AudioApplication.Music))
             {
-                try { await ffmpeg.StandardOutput.BaseStream.CopyToAsync(stream); }
+                try { await output.CopyToAsync(stream); }
                 finally { await stream.FlushAsync(); }
             }
         }
     }
 
-    private Process CreateProcess(string path)
+    private Process CreateStream(string path)
     {
-        return Process.Start(new ProcessStartInfo
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
         {
-            FileName = "ffmpeg.exe",
-            Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -ac 2 -f s16le -ar 48000 pipe:1",
-            UseShellExecute = false,
-            RedirectStandardOutput = true
-        });
+            return Process.Start(new ProcessStartInfo
+            {
+                FileName = "ffmpeg",
+                Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -filter:a \"volume = {Config.Load().Volume / 100}\" -ac 2 -f s16le -ar 48000 pipe:1",
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            });
+        }
+        else
+        {
+            return Process.Start(new ProcessStartInfo
+            {
+                FileName = "ffmpeg.exe",
+                Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -filter:a \"volume = {Config.Load().Volume / 100}\" -ac 2 -f s16le -ar 48000 pipe:1",
+                UseShellExecute = false,
+                RedirectStandardOutput = true
+            });
+        }
+
     }
 }
