@@ -83,17 +83,15 @@ namespace DiscordBot
 			// Repeat this for all the service classes and other dependencies that your commands might need.
 			_map.AddSingleton(new AudioService());
 
-			// Either search the program and add all Module classes that can be found:
-			await _commands.AddModulesAsync(Assembly.GetEntryAssembly());
+            // When all your required services are in the collection, build the container.
+            // Tip: There's an overload taking in a 'validateScopes' bool to make sure
+            // you haven't made any mistakes in your dependency graph.
+            _services = _map.BuildServiceProvider();
+
+            // Either search the program and add all Module classes that can be found:
+            await _commands.AddModulesAsync(Assembly.GetEntryAssembly(), _services);
 			// Or add Modules manually if you prefer to be a little more explicit:
 			// await _commands.AddModuleAsync<InfoModule>();
-
-
-
-			// When all your required services are in the collection, build the container.
-			// Tip: There's an overload taking in a 'validateScopes' bool to make sure
-			// you haven't made any mistakes in your dependency graph.
-			_services = _map.BuildServiceProvider();
 
 			// Subscribe a handler to see if a message invokes a command.
 			_client.MessageReceived += HandleCommandAsync;
