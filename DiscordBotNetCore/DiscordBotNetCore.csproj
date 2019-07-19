@@ -7,15 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Discord.Net" Version="2.1.0" />
-    <PackageReference Include="Discord.Net.Commands" Version="2.1.0" />
-    <PackageReference Include="Discord.Net.Core" Version="2.1.0" />
-    <PackageReference Include="Discord.Net.Rest" Version="2.1.0" />
-    <PackageReference Include="Discord.Net.Webhook" Version="2.1.0" />
-    <PackageReference Include="Discord.Net.WebSocket" Version="2.1.0" />
+    <PackageReference Include="Discord.Net" Version="2.1.1" />
+    <PackageReference Include="Discord.Net.Commands" Version="2.1.1" />
+    <PackageReference Include="Discord.Net.Core" Version="2.1.1" />
+    <PackageReference Include="Discord.Net.Rest" Version="2.1.1" />
+    <PackageReference Include="Discord.Net.Webhook" Version="2.1.1" />
+    <PackageReference Include="Discord.Net.WebSocket" Version="2.1.1" />
     <PackageReference Include="Easy.Common" Version="3.4.0" />
-    <PackageReference Include="Microsoft.Data.SQLite" Version="2.2.4" />
-    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="2.2.4" />
+    <PackageReference Include="Microsoft.Data.SQLite" Version="2.2.6" />
+    <PackageReference Include="Microsoft.Data.Sqlite.Core" Version="2.2.6" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
     <PackageReference Include="Nito.AsyncEx" Version="5.0.0" />
     <PackageReference Include="System.Net.Sockets" Version="4.3.0" />
