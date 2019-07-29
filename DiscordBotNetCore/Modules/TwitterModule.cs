@@ -34,12 +34,15 @@ namespace DiscordBot.Modules
 
 		private IFilteredStream stream;
 		public static bool running = false;
-		public static List<TwitterFeed> twitterFeeds = new List<TwitterFeed>();
+		public static List<TwitterFeed> twitterFeeds = new List<TwitterFeed>();       
 
-		public void TweetTask(string text, bool displayMsg = true)
+        public void TweetTask(string text, bool displayMsg = true)
 		{
 			RateLimit.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;                                                   //to avoid ratelimits, let Tweetinvi handle it
             TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
+
+            var tokenSource2 = new CancellationTokenSource();
+            CancellationToken ct = tokenSource2.Token;
 
             var embed = new EmbedBuilder();
 
@@ -82,32 +85,37 @@ namespace DiscordBot.Modules
                 }
             };
 
-			var MainThread = new Thread(() => stream.StartStreamMatchingAnyConditionAsync());
-			MainThread.Start();
-			MainThread = new Thread( async() =>
+			//var MainThread = new Thread(() => stream.StartStreamMatchingAnyConditionAsync());
+			//MainThread.Start();
+			var MainThread = new Thread( async() =>
 			{
-				if (!String.IsNullOrWhiteSpace(text) && displayMsg)
-				{
-					var msg = await ReplyAsync($"`Live feed is now hooked into @{text}.`");
-					await Task.Delay(2000);
-					await msg.DeleteAsync();
-				}
-				else if (!displayMsg)
-				{
-					var msg = await ReplyAsync($"`The live feed of @{text} has been removed.`");
-					await Task.Delay(2000);
-					await msg.DeleteAsync();
-				}
-				
-				while (true)
-				{
-					if (!running)
-					{
-						stream.StopStream();
-						stream.ClearFollows();
-						break;
-					}
-				}
+                using (var streamAsync = stream.StartStreamMatchingAnyConditionAsync())
+                {
+                    if (!String.IsNullOrWhiteSpace(text) && displayMsg)
+                    {
+                        var msg = await ReplyAsync($"`Live feed is now hooked into @{text}.`");
+                        await Task.Delay(2000);
+                        await msg.DeleteAsync();
+                    }
+                    else if (!displayMsg)
+                    {
+                        var msg = await ReplyAsync($"`The live feed of @{text} has been removed.`");
+                        await Task.Delay(2000);
+                        await msg.DeleteAsync();
+                    }
+
+                    while (true)
+                    {
+                        if (!running)
+                        {
+                            stream.ClearFollows();
+                            stream.StopStream();
+                            Thread.Sleep(3000);
+                            break;
+                        }
+                    }
+                }
+                    
 			});
             MainThread.IsBackground = true;
             MainThread.Start();			

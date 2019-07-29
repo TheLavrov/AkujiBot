@@ -75,26 +75,12 @@ public class AudioService
 
     private Process CreateStream(string path)
     {
-        if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+        return Process.Start(new ProcessStartInfo
         {
-            return Process.Start(new ProcessStartInfo
-            {
-                FileName = "ffmpeg",
-                Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -filter:a \"volume = {Config.Load().Volume / 100}\" -ac 2 -f s16le -ar 48000 pipe:1",
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            });
-        }
-        else
-        {
-            return Process.Start(new ProcessStartInfo
-            {
-                FileName = "ffmpeg.exe",
-                Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -filter:a \"volume = {Config.Load().Volume / 100}\" -ac 2 -f s16le -ar 48000 pipe:1",
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            });
-        }
-
+            FileName = "ffmpeg",
+            Arguments = $"-hide_banner -loglevel panic -i \"{path}\" -filter:a \"volume = {Config.Load().Volume / 100}\" -ac 2 -f s16le -ar 48000 pipe:1",
+            UseShellExecute = false,
+            RedirectStandardOutput = true
+        });
     }
 }
