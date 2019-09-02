@@ -122,13 +122,15 @@ namespace DiscordBot.Modules
             {
                 if (commandList.ElementAt(0) == command)
                 {
-                    finishedFormattedString += $"{command.Name}{command.MP}\n";
+                    finishedFormattedString += $"{command.Name}\n";
                 }
                 else
                 {
-                    finishedFormattedString += $">         {command.Name}{command.MP}\n";
+                    finishedFormattedString += $">         {command.Name}\n";
                 }
             }
+
+            finishedFormattedString = finishedFormattedString.Substring(0, finishedFormattedString.Length - 1);
 
             return finishedFormattedString;
         }
@@ -149,7 +151,7 @@ namespace DiscordBot.Modules
 
             string formattedCommands = FormatFinishedCommands(finishedList, Cursor);
 
-            var message = await ReplyAsync($"> " + Cursor + " " + formattedCommands);
+            var message = await ReplyAsync($"> " + Cursor + " " + formattedCommands + $"`MP   {finishedList[0].MP}`");
         }
     }
 }
