@@ -45,8 +45,9 @@ namespace DiscordBot.Modules
 
 		public async Task<bool> LiveCountdown(CountdownGroup cdg, int stream = (int)ActivityType.Watching)
 		{
-			TimeSpan sleeping = TimeSpan.FromMinutes(1);            //avoid ratelimiting by delaying each use of SetGameAsync
+			TimeSpan sleeping = TimeSpan.FromMinutes(1);                            //avoid ratelimiting by delaying each use of SetGameAsync
 			TimeSpan timeLeft = cdg.countdown - DateTime.Now;
+            TimeSpan livePreview = timeLeft + TimeSpan.FromMinutes(1);              //accounts for unseen seconds in preview, so no seeing 00:00 for a minute at the end (ONLY USE FOR LIVE DISPLAY STRINGS)
 
             string display = String.Empty;
             if ((ActivityType)stream == ActivityType.Streaming)
@@ -56,12 +57,12 @@ namespace DiscordBot.Modules
 
             if (timeLeft > TimeSpan.FromDays(1))
 			{
-				display = $"[{timeLeft.Days.ToString("D2")}:{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}] {cdg.description} " + display;
+				display = $"[{livePreview.Days.ToString("D2")}:{livePreview.Hours.ToString("D2")}:{livePreview.Minutes.ToString("D2")}] {cdg.description} " + display;
 				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
             else
 			{
-				display = $"[{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}] {cdg.description} " + display;
+				display = $"[{livePreview.Hours.ToString("D2")}:{livePreview.Minutes.ToString("D2")}] {cdg.description} " + display;
 				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
 
