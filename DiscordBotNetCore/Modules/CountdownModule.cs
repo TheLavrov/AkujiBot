@@ -48,19 +48,20 @@ namespace DiscordBot.Modules
 			TimeSpan sleeping = TimeSpan.FromMinutes(1);            //avoid ratelimiting by delaying each use of SetGameAsync
 			TimeSpan timeLeft = cdg.countdown - DateTime.Now;
 
-			if (timeLeft > TimeSpan.FromDays(1))
+            string display = String.Empty;
+            if ((ActivityType)stream == ActivityType.Streaming)
+            {
+                display = "[Press Watch for Stream Link]";
+            }
+
+            if (timeLeft > TimeSpan.FromDays(1))
 			{
-				string display = $"{timeLeft.Days + 1} Days until {cdg.description}";
+				display = $"[{timeLeft.Days.ToString("D2")}:{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}] {cdg.description} " + display;
 				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
-			else if (timeLeft > TimeSpan.FromHours(10))
+            else
 			{
-				string display = $"{timeLeft.Hours + 1} Hours until {cdg.description}";
-				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
-			}
-			else
-			{
-				string display = $"{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")} until {cdg.description}";
+				display = $"[{timeLeft.Hours.ToString("D2")}:{timeLeft.Minutes.ToString("D2")}] {cdg.description} " + display;
 				await Context.Client.SetGameAsync($"{display}", cdg.streamlink, (ActivityType)stream);
 			}
 
