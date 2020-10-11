@@ -27,6 +27,7 @@ namespace DiscordBot
 				LogLevel = LogSeverity.Info,
 
 				WebSocketProvider = WS4NetCore.WS4NetProvider.Instance,
+
 				// If you or another service needs to do anything with messages
 				// (eg. checking Reactions), you should probably
 				// set the MessageCacheSize here.

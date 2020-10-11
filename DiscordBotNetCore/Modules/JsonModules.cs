@@ -111,7 +111,7 @@ namespace DiscordBot.Modules
 		[Summary("Gets a random xkcd comic.")]
 		public async Task xkcd()
 		{
-			string url = "http://dynamic.xkcd.com/api-0/jsonp/comic/";
+			string url = "https://xkcd.com/info.0.json";
 			using (IRestClient client = new RestClient())
 			{
 				url = await client.GetStringAsync(url);
@@ -120,7 +120,7 @@ namespace DiscordBot.Modules
 				Random rnd = new Random();
 				int comicnum = rnd.Next(1, comic.num);
 
-				string randomurl = ($"http://dynamic.xkcd.com/api-0/jsonp/comic/{comicnum}");
+				string randomurl = ($"https://xkcd.com/{comicnum}/info.0.json");
 				randomurl = await client.GetStringAsync(randomurl);
 				xkcd rdmcomic = JsonConvert.DeserializeObject<xkcd>(randomurl);
 
