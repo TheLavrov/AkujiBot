@@ -18,11 +18,13 @@ namespace DiscordBot.Modules
 		public class TwitterFeed
 		{
 			public string twitterUser;
+            public Tweetinvi.Models.IUser twitterUserId;
 			public List<Discord.WebSocket.ISocketMessageChannel> channels = new List<Discord.WebSocket.ISocketMessageChannel>();
 
-			public TwitterFeed(string twitteruser, Discord.WebSocket.ISocketMessageChannel channel)
+			public TwitterFeed(string twitteruser, Tweetinvi.Models.IUser ID, Discord.WebSocket.ISocketMessageChannel channel)
 			{
 				twitterUser = twitteruser;
+                twitterUserId = ID;
 				channels.Add(channel);
 			}
 		}
@@ -32,28 +34,30 @@ namespace DiscordBot.Modules
 		private readonly string userAccessToken = Config.Load().userAccessToken;
 		private readonly string userAccessSecret = Config.Load().userAccessSecret;
 
+        TwitterClient userClient;
 		private IFilteredStream stream;
 		public static bool running = false;
 		public static List<TwitterFeed> twitterFeeds = new List<TwitterFeed>();       
 
-        public void TweetTask(string text, bool displayMsg = true)
+        public void TweetTask(TwitterClient client, string text, bool displayMsg = true)
 		{
-			RateLimit.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;                                                   //to avoid ratelimits, let Tweetinvi handle it
-            TweetinviConfig.CurrentThreadSettings.TweetMode = TweetMode.Extended;
-
             var tokenSource2 = new CancellationTokenSource();
             CancellationToken ct = tokenSource2.Token;
 
             var embed = new EmbedBuilder();
 
-			stream = Stream.CreateFilteredStream();                                                                             //create a stream for the live feed
-
+            stream = client.Streams.CreateFilteredStream();                                                                             //create a stream for the live feed
             stream.ClearFollows();
-			foreach (var feed in twitterFeeds.Select(x => x.twitterUser).Distinct())
-				stream.AddFollow(User.GetUserFromScreenName(feed));						                						//set the stream to follow said user(s)
 
 
-			stream.MatchingTweetReceived += async (sender, args) =>
+            foreach (var feed in twitterFeeds.Select(x => x.twitterUserId).Distinct())
+				stream.AddFollow(feed, tweet =>
+                {
+                    // A tweet was published by or related to the tweetinviapi
+                });                                                             //set the stream to follow said user(s)
+
+
+            stream.MatchingTweetReceived += async (sender, args) =>
 			{
 				var tweet = args.Tweet;
 
@@ -89,7 +93,7 @@ namespace DiscordBot.Modules
 			//MainThread.Start();
 			var MainThread = new Thread( async() =>
 			{
-                using (var streamAsync = stream.StartStreamMatchingAnyConditionAsync())
+                using (var streamAsync = stream.StartMatchingAnyConditionAsync())
                 {
                     if (!String.IsNullOrWhiteSpace(text) && displayMsg)
                     {
@@ -109,7 +113,7 @@ namespace DiscordBot.Modules
                         if (!running)
                         {
                             stream.ClearFollows();
-                            stream.StopStream();
+                            stream.Stop();
                             Thread.Sleep(3000);
                             break;
                         }
@@ -152,7 +156,8 @@ namespace DiscordBot.Modules
 				return;
 			}
 
-			Auth.SetUserCredentials(consumerKey, consumerSecret, userAccessToken, userAccessSecret);                               //initialize credentials
+            userClient = new TwitterClient(consumerKey, consumerSecret, userAccessToken, userAccessSecret);                               //initialize credentials
+            userClient.Config.RateLimitTrackerMode = RateLimitTrackerMode.TrackAndAwait;
 
             if (!running)
 			{
@@ -160,8 +165,9 @@ namespace DiscordBot.Modules
 				await Task.Delay(2000);
 				await message.DeleteAsync();
 				running = true;
-				twitterFeeds.Add(new TwitterFeed(text, Context.Channel));
-				TweetTask(text);
+                var userID = await userClient.Users.GetUserAsync(text);
+                twitterFeeds.Add(new TwitterFeed(text, userID, Context.Channel));
+				TweetTask(userClient, text);
 				return;
 			}
 			else if (!String.IsNullOrWhiteSpace(text))
@@ -197,7 +203,8 @@ namespace DiscordBot.Modules
 
 				if (!temp)
 				{
-					twitterFeeds.Add(new TwitterFeed(text, Context.Channel));
+                    var userID = await userClient.Users.GetUserAsync(text);
+                    twitterFeeds.Add(new TwitterFeed(text, userID, Context.Channel));
 					var message = await ReplyAsync($"`Adding @{text} to the live feed watchlist for this channel.`");
 					await Task.Delay(2000);
 					await message.DeleteAsync();
@@ -206,13 +213,13 @@ namespace DiscordBot.Modules
 				if (twitterFeeds.Count != 0 && !removed)
 				{
 					running = true;
-					TweetTask(text);
+					TweetTask(userClient, text);
 					return;
 				}
 				else if (twitterFeeds.Count != 0 && removed)
 				{
 					running = true;
-					TweetTask(text, false);
+					TweetTask(userClient, text, false);
 					return;
 				}
 				else
@@ -239,7 +246,7 @@ namespace DiscordBot.Modules
 				if (twitterFeeds.Count != 0)
 				{
 					running = true;
-					TweetTask(text);
+					TweetTask(userClient, text);
 				}
 				return;
 			}
