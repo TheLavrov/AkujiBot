@@ -26,7 +26,8 @@ namespace DiscordBot
 				// How much logging do you want to see?
 				LogLevel = LogSeverity.Info,
 
-				WebSocketProvider = WS4NetCore.WS4NetProvider.Instance,
+				//WebSocketProvider = WS4NetCore.WS4NetProvider.Instance,
+				GatewayIntents = GatewayIntents.AllUnprivileged,
 
 				// If you or another service needs to do anything with messages
 				// (eg. checking Reactions), you should probably
