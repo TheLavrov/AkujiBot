@@ -25,8 +25,6 @@ namespace DiscordBot
 			{
 				// How much logging do you want to see?
 				LogLevel = LogSeverity.Info,
-
-				//WebSocketProvider = WS4NetCore.WS4NetProvider.Instance,
 				GatewayIntents = GatewayIntents.AllUnprivileged,
 
 				// If you or another service needs to do anything with messages
@@ -66,6 +64,7 @@ namespace DiscordBot
 			Config.EnsureExists();
 
 			_client.Log += Logger;
+			_client.ButtonExecuted += ButtonHandler;
 
 			await InitCommands();
 
@@ -97,6 +96,19 @@ namespace DiscordBot
 
 			// Subscribe a handler to see if a message invokes a command.
 			_client.MessageReceived += HandleCommandAsync;
+		}
+
+		private async Task ButtonHandler(SocketMessageComponent component) 
+		{
+			switch (component.Data.CustomId) 
+			{
+				case { } when component.Data.CustomId.StartsWith("role-assignment-"):
+					await component.RespondAsync("test");
+					break;
+				default:
+					await component.RespondAsync("Unknown button. Check ButtonHandler().");
+					break;
+			}
 		}
 
 		private async Task HandleCommandAsync(SocketMessage arg)
